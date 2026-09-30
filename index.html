@@ -210,8 +210,8 @@
         <p class="sec-sub">填写信息加入工会，开启你的方块冒险</p>
         <form id="joinForm">
           <div class="form-group">
-            <p class="q-title"><span class="q-no">1.</span>你的 QQ 昵称及游戏内 ID 是？</p>
-            <input type="text" name="ign" placeholder="请输入 QQ 昵称和 Minecraft 游戏名" required />
+            <p class="q-title"><span class="q-no">1.</span>你的 QQ 昵称是？</p>
+            <input type="text" name="ign" placeholder="请输入你的 QQ 昵称" required />
           </div>
           <div class="form-group">
             <p class="q-title"><span class="q-no">2.</span>你的 QQ 号<span class="opt">（审核通过后凭此联系你，必填）</span></p>
@@ -226,12 +226,12 @@
             </div>
           </div>
           <div class="form-group">
-            <p class="q-title"><span class="q-no">4.</span>在游戏中，你最擅长什么？<span class="opt">（多选题，可多选）</span></p>
+            <p class="q-title"><span class="q-no">4.</span>在游戏中，你最擅长什么？<span class="opt">（单选）</span></p>
             <div class="choice-group">
-              <label><input type="checkbox" name="sk" value="建筑" />建筑</label>
-              <label><input type="checkbox" name="sk" value="生电" />生电</label>
-              <label><input type="checkbox" name="sk" value="PVP" />PVP</label>
-              <label><input type="checkbox" name="sk" value="休闲" />休闲</label>
+              <label><input type="radio" name="sk" value="建筑" required />建筑</label>
+              <label><input type="radio" name="sk" value="生电" />生电</label>
+              <label><input type="radio" name="sk" value="PVP" />PVP</label>
+              <label><input type="radio" name="sk" value="资源收集" />资源收集</label>
             </div>
           </div>
           <div class="form-group">
@@ -300,21 +300,21 @@
       const ign = this.ign.value.trim();
       const qq = this.qq.value.trim();
       const online = (this.online.value || '').trim();
-      const skills = Array.from(this.sk).filter(c => c.checked).map(c => c.value);
+      const skill = (this.sk.value || '').trim();
       const conflict = this.conflict.value.trim();
       const promise = (this.promise.value || '').trim();
       const msg = this.msg.value.trim();
-      if (!ign) { alert('请填写 QQ 昵称及游戏内 ID'); return; }
+      if (!ign) { alert('请填写 QQ 昵称'); return; }
       if (!/^[1-9][0-9]{4,11}$/.test(qq)) { alert('请填写正确的 QQ 号（5~12 位纯数字）'); return; }
       if (!online) { alert('请选择大概上线时间'); return; }
-      if (skills.length === 0) { alert('请至少选择一项你擅长的内容'); return; }
+      if (!skill) { alert('请选择一项你最擅长的内容'); return; }
       if (!conflict) { alert('请填写第 5 题：发生矛盾时你会怎样处理'); return; }
       if (!promise) { alert('请选择第 6 题：是否接受公平公正原则'); return; }
       if (promise === '否') { alert('你选择了不接受工会公平公正原则，暂无法提交入会申请'); return; }
       /* 其余回答合并存入留言字段（后台"其他回答"列展示） */
       const detail = '【矛盾处理】' + conflict + '\n【公平承诺】' + promise + (msg ? '\n【留言】' + msg : '');
       try {
-        await DB.addApp({ ign, email: qq, server: online, skill: skills.join('、'), msg: detail, time: new Date().toLocaleString('zh-CN'), status: 'pending' });
+        await DB.addApp({ ign, email: qq, server: online, skill, msg: detail, time: new Date().toLocaleString('zh-CN'), status: 'pending' });
         alert('申请提交成功！工会管理将尽快审核，审核通过后会通过 QQ 联系你。');
         this.reset();
       } catch (err) { alert('提交失败，请检查网络后重试：' + err.message); }
