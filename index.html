@@ -123,6 +123,17 @@
 </head>
 <body>
 
+  <!-- 美化地址栏：若通过 /index.html 进入（例如从子页面点返回），静默替换为根路径，不刷新页面 -->
+  <script>
+    (function () {
+      if (!/^https?:$/.test(location.protocol)) return;   // 本地 file:// 打开时不处理
+      var p = location.pathname;
+      if (/\/index\.html$/.test(p)) {
+        history.replaceState(null, '', p.slice(0, -10) + location.search + location.hash);  // 去掉末尾 index.html
+      }
+    })();
+  </script>
+
   <!-- 手机端汉堡按钮与遮罩 -->
   <button class="menu-btn" id="menuBtn" aria-label="打开菜单">☰</button>
   <div class="mask" id="mask"></div>
