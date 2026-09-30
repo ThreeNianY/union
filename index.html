@@ -34,7 +34,8 @@
       transition: transform .3s;
     }
     .logo { color: #fff; font-size: 20px; font-weight: bold; padding: 4px 10px 20px; border-bottom: 1px solid rgba(255,255,255,.18); margin-bottom: 16px; }
-    .logo small { display: block; color: rgba(255,255,255,.65); font-size: 12px; font-weight: normal; letter-spacing: 2px; margin-top: 2px; }
+    .logo img { width: 100%; display: block; background: #fff; border-radius: 8px; padding: 6px; }   /* logo 图片衬白底，适配深色侧栏 */
+    .logo small { display: block; color: rgba(255,255,255,.65); font-size: 12px; font-weight: normal; letter-spacing: 2px; margin-top: 8px; text-align: center; }
     .nav-links { list-style: none; display: flex; flex-direction: column; gap: 4px; }
     .nav-links a { display: block; padding: 12px 14px; border-radius: 10px; color: rgba(255,255,255,.92); font-size: 15px; transition: background .2s; }
     .nav-links a:hover { background: rgba(255,255,255,.14); color: #fff; }
@@ -140,7 +141,10 @@
 
   <!-- 左侧边导航栏（手机端为抽屉式滑出） -->
   <aside class="sidebar" id="sidebar">
-    <div class="logo">潮汐聚澜<small>MINECRAFT 工会</small></div>
+    <div class="logo">
+      <img class="logo-img" alt="潮汐聚澜" />
+      <small>MINECRAFT 工会</small>
+    </div>
     <ul class="nav-links" id="navLinks">
       <li><a href="#home" class="active">首页</a></li>
       <li><a href="#about">工会简介</a></li>
