@@ -141,6 +141,36 @@
     .cards .card.reveal:nth-child(3) { transition-delay: .16s; }
     .cards .card.reveal:nth-child(4) { transition-delay: .24s; }
 
+    /* 简介区：三步加入流程 */
+    .join-steps { display: flex; gap: 14px; margin-top: 22px; }
+    .join-steps .step { flex: 1; background: #fff; border-radius: 12px; padding: 16px 14px; box-shadow: var(--shadow); text-align: center; border-top: 3px solid var(--cyan); }
+    .join-steps .step b { display: block; width: 28px; height: 28px; line-height: 28px; margin: 0 auto 8px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), #0e8fc9); color: #fff; font-size: 14px; }
+    .join-steps .step h4 { font-size: 14px; margin-bottom: 4px; }
+    .join-steps .step p { font-size: 12.5px; color: var(--gray); line-height: 1.6; }
+    @media (max-width: 600px) {
+      .join-steps { flex-direction: column; gap: 10px; }
+      .join-steps .step { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 16px; }
+      .join-steps .step b { margin: 0; flex: none; }
+      .join-steps .step div { flex: 1; }
+    }
+
+    /* 部门卡片：招募要求 + 实时人数 */
+    .card .req { font-size: 12.5px; color: var(--gray); background: var(--bg-soft); border-radius: 8px; padding: 8px 10px; margin-top: 12px; line-height: 1.6; text-align: left; }
+    .card .req b { color: var(--accent); }
+    .card .count { margin-top: 10px; font-size: 13px; color: var(--gray); }
+    .card .count b { color: var(--accent); font-size: 16px; }
+
+    /* FAQ 板块：折叠问答 */
+    .faq-list { max-width: 760px; margin: 0 auto; }
+    .faq-item { background: #fff; border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 12px; overflow: hidden; transition: box-shadow .2s; }
+    .faq-item:hover { box-shadow: 0 8px 24px rgba(12, 123, 179, .16); }
+    .faq-item summary { padding: 17px 22px; cursor: pointer; font-weight: bold; font-size: 15px; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; user-select: none; }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after { content: "+"; flex: none; width: 26px; height: 26px; line-height: 24px; text-align: center; border-radius: 50%; background: var(--bg-soft); color: var(--blue); font-size: 18px; font-weight: normal; transition: transform .25s, background .25s, color .25s; }
+    .faq-item[open] summary { color: var(--blue); }
+    .faq-item[open] summary::after { transform: rotate(45deg); background: var(--blue); color: #fff; }
+    .faq-item .faq-a { padding: 0 22px 18px; color: var(--gray); font-size: 14px; line-height: 1.85; }
+
     @media (max-width: 900px) {
       .cards { grid-template-columns: 1fr 1fr; }
       .about-wrap { grid-template-columns: 1fr; display: grid; }
@@ -204,6 +234,7 @@
       <li><a href="#home" class="active">首页</a></li>
       <li><a href="#about">工会简介</a></li>
       <li><a href="#service">部门设置</a></li>
+      <li><a href="#faq">常见问题</a></li>
       <li><a href="#join">入会申请</a></li>
       <li><a class="nav-btn" href="member/">成员专区</a></li>
     </ul>
@@ -249,6 +280,12 @@
           <div class="stat"><b>3</b><span>入驻服务器</span></div>
         </div>
       </div>
+      <!-- 加入只需三步 -->
+      <div class="container join-steps reveal">
+        <div class="step"><b>1</b><div><h4>填写申请</h4><p>点击下方"入会申请"，花两分钟填完问卷</p></div></div>
+        <div class="step"><b>2</b><div><h4>等待审核</h4><p>管理员看到你的申请后会通过 QQ 联系你</p></div></div>
+        <div class="step"><b>3</b><div><h4>正式加入</h4><p>进入工会群，选择部门，开始一起玩</p></div></div>
+      </div>
     </section>
 
     <!-- 部门设置 -->
@@ -257,10 +294,44 @@
         <h2 class="sec-title">部门<span>设置</span></h2>
         <p class="sec-sub">四大部门各司其职，总有一款适合你</p>
         <div class="cards">
-          <div class="card reveal" style="--accent:#e05c4a;"><div class="seal">战</div><h3>战斗部门</h3><p>冲锋陷阵、护卫家园，负责PVP对抗与怪物讨伐，是工会的利刃。</p></div>
-          <div class="card reveal" style="--accent:#e8b84b;"><div class="seal">筑</div><h3>建筑部门</h3><p>规划设计、精雕细琢，负责工会建筑与基地建造，是工会的画笔。</p></div>
-          <div class="card reveal" style="--accent:#27ae60;"><div class="seal">集</div><h3>资源部门</h3><p>挖矿伐木、收集物资，负责工会资源储备与后勤补给，是工会的血脉。</p></div>
-          <div class="card reveal" style="--accent:#7e57c2;"><div class="seal">电</div><h3>生电部门</h3><p>红石机械、自动化农场，负责技术支持与设施研发，是工会的大脑。</p></div>
+          <div class="card reveal" style="--accent:#e05c4a;"><div class="seal">战</div><h3>战斗部门</h3><p>冲锋陷阵、护卫家园，负责PVP对抗与怪物讨伐，是工会的利刃。</p><p class="req"><b>招募要求：</b>喜欢PVP或打怪，愿意参加集体战斗活动，装备好坏不限</p><p class="count">当前 <b class="dept-count" data-dept="战斗部门">—</b> 人</p></div>
+          <div class="card reveal" style="--accent:#e8b84b;"><div class="seal">筑</div><h3>建筑部门</h3><p>规划设计、精雕细琢，负责工会建筑与基地建造，是工会的画笔。首屏的城堡就出自这里。</p><p class="req"><b>招募要求：</b>对建筑有兴趣即可，新手有人教，欢迎有想法的设计师</p><p class="count">当前 <b class="dept-count" data-dept="建筑部门">—</b> 人</p></div>
+          <div class="card reveal" style="--accent:#27ae60;"><div class="seal">集</div><h3>资源部门</h3><p>挖矿伐木、收集物资，负责工会资源储备与后勤补给，是工会的血脉。</p><p class="req"><b>招募要求：</b>有耐心、喜欢收集，休闲玩家也能胜任</p><p class="count">当前 <b class="dept-count" data-dept="资源部门">—</b> 人</p></div>
+          <div class="card reveal" style="--accent:#7e57c2;"><div class="seal">电</div><h3>生电部门</h3><p>红石机械、自动化农场，负责技术支持与设施研发，是工会的大脑。</p><p class="req"><b>招募要求：</b>对红石/自动化好奇，愿意学，零基础可从抄作业开始</p><p class="count">当前 <b class="dept-count" data-dept="生电部门">—</b> 人</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 常见问题 -->
+    <section id="faq">
+      <div class="container">
+        <h2 class="sec-title reveal">常见<span>问题</span></h2>
+        <p class="sec-sub reveal">新手最常问的几个问题，先看这里</p>
+        <div class="faq-list reveal">
+          <details class="faq-item">
+            <summary>完全没玩过 Minecraft，可以加入吗？</summary>
+            <div class="faq-a">当然可以！工会里不少成员都是从零基础开始的。游戏操作容易上手，入会后有老成员带着熟悉环境，建筑和生电部门也欢迎新手边学边玩。</div>
+          </details>
+          <details class="faq-item">
+            <summary>加入后有人带我玩吗？</summary>
+            <div class="faq-a">有的。新成员入会后会有老成员带你熟悉服务器、介绍工会设施和规矩。各部门也有熟手，遇到问题随时在群里问，大家都很乐意帮忙。</div>
+          </details>
+          <details class="faq-item">
+            <summary>工会有固定的活动时间吗？</summary>
+            <div class="faq-a">没有硬性要求，大家空闲时间上线即可。一般晚上和周末在线的人最多，大型建筑或战斗活动会提前在群里约定时间，能来就来，不强制。</div>
+          </details>
+          <details class="faq-item">
+            <summary>网易版和 JAVA 版都可以来吗？</summary>
+            <div class="faq-a">都可以。工会常驻网易与 JAVA 两个平台共 3 个服务器，填申请表时选择你玩的版本，审核通过后会告诉你对应服务器的加入方式。</div>
+          </details>
+          <details class="faq-item">
+            <summary>加入需要什么条件？要考试吗？</summary>
+            <div class="faq-a">不需要考试，也没有技术门槛。只要填写入会申请表、通过管理员审核即可。我们最看重的是友好合群——愿意一起玩、不搞破坏，就是好成员。</div>
+          </details>
+          <details class="faq-item">
+            <summary>需要每天上线吗？长期不上线会被踢吗？</summary>
+            <div class="faq-a">不会强制打卡，学业和工作优先。只是如果长期（一个月以上）完全不冒泡，可能会被移出名录；回来时说一声就能恢复，不用担心。</div>
+          </details>
         </div>
       </div>
     </section>
@@ -355,7 +426,7 @@
 
     /* ===================== 2. 滚动监听：返回顶部按钮 + 当前版块高亮 ===================== */
     const toTop = document.getElementById('toTop');
-    const secEls = ['home', 'about', 'service', 'join'].map(id => document.getElementById(id));
+    const secEls = ['home', 'about', 'service', 'faq', 'join'].map(id => document.getElementById(id));
     const navAs = document.querySelectorAll('#navLinks a[href^="#"]');
     window.addEventListener('scroll', () => {
       toTop.style.display = window.scrollY > 400 ? 'block' : 'none';
@@ -365,6 +436,18 @@
       navAs.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
     }, { passive: true });
     toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    /* ===================== 2.5 部门卡片：从云端加载各部门实时人数 ===================== */
+    (async function loadDeptCounts() {
+      try {
+        const members = await DB.getMembers();
+        const counts = {};
+        members.forEach(m => { if (m.dept) counts[m.dept] = (counts[m.dept] || 0) + 1; });
+        document.querySelectorAll('.dept-count').forEach(el => {
+          el.textContent = counts[el.dataset.dept] || 0;
+        });
+      } catch (_) { /* 加载失败保持显示"—"，不影响页面其他功能 */ }
+    })();
 
     /* ===================== 3. 入会表单：草稿暂存 + 前端校验 + 提交反馈 ===================== */
     const joinForm = document.getElementById('joinForm');
