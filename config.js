@@ -61,7 +61,7 @@ const DB = {
   },
   async clearApps() {
     if (USE_CLOUD) {
-      await apiFetch('applications', { method: 'DELETE' }); return;
+      await apiFetch('applications?id=gte.0', { method: 'DELETE' }); return;
     }
     localStorage.removeItem('fr_apps');
   },
