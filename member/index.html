@@ -47,9 +47,9 @@
     .sidebar .logo small { color: rgba(255,255,255,.65); font-size: 12px; font-weight: normal; }
     .nav-links { list-style: none; display: flex; flex-direction: column; gap: 4px; }
     .nav-links a { display: block; padding: 12px 14px; border-radius: 10px; color: rgba(255,255,255,.92); font-size: 15px; transition: background .2s, transform .2s; }
-    /* 未解锁时禁用导航（返回主页除外） */
-    .sidebar.locked .nav-links a:not(.nav-btn) { pointer-events: none; opacity: .35; }
-    .sidebar.locked .nav-links a:not(.nav-btn):hover { background: none; transform: none; }
+    /* 未解锁时：完全隐藏侧栏/汉堡按钮，内容区占满整页 */
+    body.locked .sidebar, body.locked .menu-btn, body.locked .mask { display: none; }
+    body.locked .page { margin-left: 0; }
     .nav-links a:hover { background: rgba(255,255,255,.14); color: #fff; transform: translateX(4px); }
     .nav-links a.active { background: rgba(255,255,255,.2); color: #fff; font-weight: bold; box-shadow: inset 3px 0 0 var(--gold); }
     .nav-links a.nav-btn { background: var(--gold); color: #3a2a00 !important; text-align: center; font-weight: bold; margin-top: 12px; }
@@ -82,6 +82,8 @@
     .gate .err { color: var(--danger); font-size: 13px; min-height: 20px; }
     .gate .btn { width: 100%; margin-top: 8px; display: inline-block; padding: 11px 22px; border-radius: 30px; background: linear-gradient(135deg, var(--blue), #0e8fc9); color: #fff; border: none; cursor: pointer; font-size: 15px; font-family: inherit; box-shadow: 0 4px 14px rgba(12, 123, 179, .28); }
     .gate .btn:hover { background: linear-gradient(135deg, var(--blue-dark), var(--blue)); }
+    .gate .gate-back { display: inline-block; margin-top: 16px; color: var(--gray); font-size: 13px; transition: color .2s; }
+    .gate .gate-back:hover { color: var(--blue); }
 
     /* 成员公告 */
     .notice-box { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 16px; padding: 30px; box-shadow: var(--shadow); border-left: 5px solid; border-image: linear-gradient(180deg, var(--blue), var(--cyan)) 1; }
@@ -139,14 +141,14 @@
     @media (max-width: 600px) { .nav-links-grid { grid-template-columns: 1fr; } .roster-grid { grid-template-columns: 1fr; } .gate { margin: 50px auto; } }
   </style>
 </head>
-<body>
+<body class="locked">
 
   <!-- 手机端汉堡按钮 + 遮罩 -->
   <button class="menu-btn" id="menuBtn" aria-label="打开菜单">☰</button>
   <div class="mask" id="mask"></div>
 
   <!-- 左侧边导航栏 -->
-  <aside class="sidebar locked" id="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="logo">
       <img class="logo-img" alt="潮汐聚澜" />
       <small>成员专区</small>
@@ -172,6 +174,7 @@
       <p class="err" id="gateErr"></p>
       <button type="submit" class="btn">进入专区</button>
     </form>
+    <a href="../index.html" class="gate-back">← 返回主页</a>
   </div>
 
   <!-- 专区内容（解锁后显示） -->
@@ -310,7 +313,7 @@
     async function unlock() {
       gate.classList.add('hidden');
       content.classList.remove('hidden');
-      document.getElementById('sidebar').classList.remove('locked');
+      document.body.classList.remove('locked');
       await Promise.all([
         renderNotice(), renderNavLinks(),
         renderSingleBox(DB.getRules, 'rulesBox', '暂无规则，请等待管理员发布。'),
