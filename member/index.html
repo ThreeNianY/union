@@ -320,6 +320,7 @@
         renderSingleBox(DB.getServers, 'serversBox', '暂无服务器信息，请等待管理员发布。'),
         renderRoster()
       ]);
+      onScrollSpy();  /* 解锁后内容就位，立即刷新一次高亮 */
     }
 
     /* 本次会话已验证过则直接进入（关闭浏览器后失效） */
@@ -431,12 +432,12 @@
     const spyLinks = sidebar.querySelectorAll('a[href^="#"]');
     const spySecs = ['notice', 'rules', 'servers', 'roster', 'suggest', 'memberNav'].map(id => document.getElementById(id));
     function onScrollSpy() {
+      if (document.body.classList.contains('locked')) return;  /* 未解锁时板块全隐藏，坐标无意义，直接跳过 */
       let cur = 0;
       spySecs.forEach((s, i) => { if (s && s.getBoundingClientRect().top <= 140) cur = i; });
       spyLinks.forEach((a, i) => a.classList.toggle('active', i === cur));
     }
     window.addEventListener('scroll', onScrollSpy, { passive: true });
-    onScrollSpy();
   </script>
 </body>
 </html>
