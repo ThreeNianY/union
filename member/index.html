@@ -34,15 +34,40 @@
     .hidden { display: none !important; }
     .activities { background: var(--bg-soft); }
 
-    /* 顶部导航（简化版） */
-    header { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.95); box-shadow: var(--shadow); }
-    .nav { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
-    .logo { font-size: 20px; font-weight: bold; color: var(--blue); display: flex; align-items: center; gap: 10px; }
-    .logo img { height: 36px; width: auto; display: block; }   /* logo 图片 */
-    .logo small { color: var(--gray); font-size: 12px; font-weight: normal; }
-    /* 返回主页按钮：导航栏右侧圆形回箭头 */
-    .back-home { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-soft); color: var(--blue); font-size: 22px; line-height: 1; transition: background .2s, transform .2s; }
-    .back-home:hover { background: #d7eaf5; transform: translateX(-2px); }
+    /* ========== 左侧边导航栏（桌面端常驻，手机端为抽屉） ========== */
+    :root { --sidebar-w: 220px; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w); z-index: 300;
+      display: flex; flex-direction: column; padding: 26px 16px;
+      background: linear-gradient(180deg, var(--blue-dark), var(--blue));
+      transition: transform .3s;
+    }
+    .sidebar .logo { color: #fff; font-size: 20px; font-weight: bold; padding: 4px 10px 20px; border-bottom: 1px solid rgba(255,255,255,.18); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .sidebar .logo img { height: 36px; width: auto; display: block; }
+    .sidebar .logo small { color: rgba(255,255,255,.65); font-size: 12px; font-weight: normal; }
+    .nav-links { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .nav-links a { display: block; padding: 12px 14px; border-radius: 10px; color: rgba(255,255,255,.92); font-size: 15px; transition: background .2s, transform .2s; }
+    .nav-links a:hover { background: rgba(255,255,255,.14); color: #fff; transform: translateX(4px); }
+    .nav-links a.active { background: rgba(255,255,255,.2); color: #fff; font-weight: bold; box-shadow: inset 3px 0 0 var(--gold); }
+    .nav-links a.nav-btn { background: var(--gold); color: #3a2a00 !important; text-align: center; font-weight: bold; margin-top: 12px; }
+    .nav-links a.nav-btn:hover { background: #f3c862; }
+    .side-foot { margin-top: auto; color: rgba(255,255,255,.5); font-size: 12px; padding: 0 10px; }
+    .back-home { display: inline-block; padding: 10px 14px; border-radius: 10px; background: rgba(255,255,255,.12); color: #fff; font-size: 14px; text-align: center; transition: background .2s; }
+    .back-home:hover { background: rgba(255,255,255,.22); }
+
+    /* 主内容区：桌面端让出侧栏宽度 */
+    .page { margin-left: var(--sidebar-w); }
+
+    /* 手机端：汉堡按钮（固定左上角）+ 半透明遮罩 */
+    .menu-btn {
+      display: none; position: fixed; top: 14px; left: 14px; z-index: 400;
+      width: 44px; height: 44px; border: none; border-radius: 50%;
+      background: rgba(255,255,255,.95); box-shadow: var(--shadow);
+      color: var(--blue); font-size: 22px; cursor: pointer;
+      align-items: center; justify-content: center;
+    }
+    .mask { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 250; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
+    .mask.show { opacity: 1; visibility: visible; }
 
     /* 密码验证卡片：顶部潮汐渐变条 */
     .gate { position: relative; overflow: hidden; max-width: 380px; margin: 90px auto; background: #fff; border-radius: 16px; padding: 44px 32px 40px; box-shadow: 0 14px 44px rgba(12, 123, 179, .16); text-align: center; }
@@ -101,21 +126,39 @@
     /* 页脚 */
     footer { background: #142a36; color: #9fb3bf; text-align: center; padding: 28px 20px; font-size: 14px; }
 
-    @media (max-width: 900px) { .nav-links-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 900px) {
+      .nav-links-grid { grid-template-columns: 1fr 1fr; }
+      .sidebar { width: 264px; transform: translateX(-100%); box-shadow: 4px 0 24px rgba(0,0,0,.25); }
+      .sidebar.open { transform: none; }
+      .page { margin-left: 0; }
+      .menu-btn { display: flex; }
+    }
     @media (max-width: 600px) { .nav-links-grid { grid-template-columns: 1fr; } .roster-grid { grid-template-columns: 1fr; } .gate { margin: 50px auto; } }
   </style>
 </head>
 <body>
 
-  <!-- 顶部导航 -->
-  <header>
-    <nav class="nav">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <a class="back-home" href="../index.html" title="返回主页">←</a>
-        <div class="logo"><img class="logo-img" alt="潮汐聚澜" /><small>成员专区</small></div>
-      </div>
-    </nav>
-  </header>
+  <!-- 手机端汉堡按钮 + 遮罩 -->
+  <button class="menu-btn" id="menuBtn" aria-label="打开菜单">☰</button>
+  <div class="mask" id="mask"></div>
+
+  <!-- 左侧边导航栏 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <img class="logo-img" alt="潮汐聚澜" />
+      <small>成员专区</small>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#notice">成员公告</a></li>
+      <li><a href="#rules">工会规则</a></li>
+      <li><a href="#servers">服务器信息</a></li>
+      <li><a href="#roster">成员名录</a></li>
+      <li><a href="#suggest">提议箱</a></li>
+      <li><a href="#memberNav">网页导航</a></li>
+      <li><a href="../index.html" class="nav-btn">返回主页</a></li>
+    </ul>
+    <div class="side-foot">潮汐聚澜 · 内部成员专属</div>
+  </aside>
 
   <!-- 密码验证（未解锁时显示） -->
   <div class="gate" id="gate">
@@ -129,7 +172,7 @@
   </div>
 
   <!-- 专区内容（解锁后显示） -->
-  <div id="memberContent" class="hidden">
+  <div id="memberContent" class="hidden page">
     <!-- 成员公告 -->
     <section id="notice" class="activities" style="padding-top:60px;">
       <div class="container">
@@ -190,7 +233,7 @@
   </div>
 
   <!-- 页脚 -->
-  <footer>
+  <footer class="page">
     <p>© 2026 潮汐聚澜工会 | 汇聚潮汐之力，共建温馨工会</p>
   </footer>
 
@@ -361,6 +404,32 @@
       } catch (err) { showToast('提交失败：' + err.message, 'error'); }
       finally { setBtnLoading(btn, false); }
     });
+
+    /* ===================== 侧栏：手机端汉堡开关 + 遮罩 ===================== */
+    const sidebar = document.getElementById('sidebar');
+    const menuBtn = document.getElementById('menuBtn');
+    const mask = document.getElementById('mask');
+    function setMenu(open) {
+      sidebar.classList.toggle('open', open);
+      mask.classList.toggle('show', open);
+      menuBtn.textContent = open ? '✕' : '☰';
+      menuBtn.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
+    }
+    menuBtn.addEventListener('click', () => setMenu(!sidebar.classList.contains('open')));
+    mask.addEventListener('click', () => setMenu(false));
+    /* 手机端点完导航项后自动收起抽屉 */
+    sidebar.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', () => setMenu(false)));
+
+    /* ===================== 侧栏：滚动高亮当前板块 ===================== */
+    const spyLinks = sidebar.querySelectorAll('a[href^="#"]');
+    const spySecs = ['notice', 'rules', 'servers', 'roster', 'suggest', 'memberNav'].map(id => document.getElementById(id));
+    function onScrollSpy() {
+      let cur = 0;
+      spySecs.forEach((s, i) => { if (s && s.getBoundingClientRect().top <= 140) cur = i; });
+      spyLinks.forEach((a, i) => a.classList.toggle('active', i === cur));
+    }
+    window.addEventListener('scroll', onScrollSpy, { passive: true });
+    onScrollSpy();
   </script>
 </body>
 </html>
