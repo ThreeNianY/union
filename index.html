@@ -444,7 +444,7 @@
         const counts = {};
         members.forEach(m => { if (m.dept) counts[m.dept] = (counts[m.dept] || 0) + 1; });
         document.querySelectorAll('.dept-count').forEach(el => {
-          el.textContent = counts[el.dataset.dept] || 0;
+          el.textContent = (counts[el.dataset.dept] || 0) + 10;   /* 展示人数 = 实际入册 + 10（含未登记的老成员） */
         });
       } catch (_) { /* 加载失败保持显示"—"，不影响页面其他功能 */ }
     })();
