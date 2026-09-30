@@ -348,13 +348,13 @@
       }
     }
 
-    /* 第4题选项 → 成员名录部门名 */
+    /* 第4题选项 → 成员名录部门名（与成员页 DEPTS 全称一致） */
     function skillToDept(skill) {
       const s = skill || '';
-      if (s.includes('资源')) return '资源';
-      if (s.includes('建筑')) return '建筑';
-      if (s.includes('生电')) return '生电';
-      if (s.includes('PVP') || s.includes('战斗')) return '战斗';
+      if (s.includes('资源')) return '资源部门';
+      if (s.includes('建筑')) return '建筑部门';
+      if (s.includes('生电')) return '生电部门';
+      if (s.includes('PVP') || s.includes('战斗')) return '战斗部门';
       return '';
     }
 
