@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>潮汐聚澜 · 工会宣传</title>
+  <meta name="description" content="潮汐聚澜 Minecraft 工会招募中！50+成员、4大部门、3个服务器，诚邀热爱建筑/生电/PVP/资源收集的玩家加入。" />
+  <meta property="og:title" content="潮汐聚澜 · Minecraft 工会招募中" />
+  <meta property="og:description" content="50+成员 Minecraft 工会，建筑/生电/PVP/资源收集四大部门，入驻3个服务器，欢迎加入！" />
+  <meta property="og:image" content="https://cxjlfsn.dpdns.org/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://cxjlfsn.dpdns.org/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <title>潮汐聚澜 · Minecraft 工会招募中</title>
   <style>
     /* ========== 全局设计变量 ========== */
     :root {
@@ -303,9 +310,46 @@
     }, { passive: true });
     toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-    /* ===================== 3. 入会表单：前端校验 + 提交到数据库 ===================== */
-    document.getElementById('joinForm').addEventListener('submit', async function (e) {
+    /* ===================== 3. 入会表单：草稿暂存 + 前端校验 + 提交反馈 ===================== */
+    const joinForm = document.getElementById('joinForm');
+
+    /* --- 草稿：输入后自动存到本地，刷新不丢；提交成功后清除 --- */
+    let draftTimer = null;
+    function saveDraft() {
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(() => {
+        try {
+          localStorage.setItem('join_draft', JSON.stringify({
+            ign: joinForm.ign.value, qq: joinForm.qq.value,
+            srv: joinForm.srv.value, online: joinForm.online.value,
+            sk: joinForm.sk.value, conflict: joinForm.conflict.value,
+            promise: joinForm.promise.value, msg: joinForm.msg.value
+          }));
+        } catch (_) {}
+      }, 400);
+    }
+    joinForm.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', saveDraft));
+    joinForm.querySelectorAll('input[type=radio]').forEach(el => el.addEventListener('change', saveDraft));
+    /* 进入页面时恢复上次未提交的内容 */
+    (function restoreDraft() {
+      try {
+        const d = JSON.parse(localStorage.getItem('join_draft') || 'null');
+        if (!d) return;
+        if (d.ign) joinForm.ign.value = d.ign;
+        if (d.qq) joinForm.qq.value = d.qq;
+        if (d.srv) joinForm.srv.value = d.srv;
+        if (d.online) joinForm.online.value = d.online;
+        if (d.sk) joinForm.sk.value = d.sk;
+        if (d.conflict) joinForm.conflict.value = d.conflict;
+        if (d.promise) joinForm.promise.value = d.promise;
+        if (d.msg) joinForm.msg.value = d.msg;
+        if (Object.values(d).some(v => v)) showToast('已恢复你上次未提交的内容', 'info');
+      } catch (_) {}
+    })();
+
+    joinForm.addEventListener('submit', async function (e) {
       e.preventDefault();
+      const submitBtn = this.querySelector('button[type=submit]');
       const ign = this.ign.value.trim();
       const qq = this.qq.value.trim();
       const srv = (this.srv.value || '').trim();
@@ -314,21 +358,30 @@
       const conflict = this.conflict.value.trim();
       const promise = (this.promise.value || '').trim();
       const msg = this.msg.value.trim();
-      if (!ign) { alert('请填写 QQ 昵称'); return; }
-      if (!/^[1-9][0-9]{4,11}$/.test(qq)) { alert('请填写正确的 QQ 号（5~12 位纯数字）'); return; }
-      if (!srv) { alert('请选择你玩的版本（网易服/JAVA服）'); return; }
-      if (!online) { alert('请选择大概上线时间'); return; }
-      if (!skill) { alert('请选择一项你最擅长的内容'); return; }
-      if (!conflict) { alert('请填写第 6 题：发生矛盾时你会怎样处理'); return; }
-      if (!promise) { alert('请选择第 7 题：是否接受公平公正原则'); return; }
-      if (promise === '否') { alert('你选择了不接受工会公平公正原则，暂无法提交入会申请'); return; }
+      /* 逐项校验：明确提示哪一项有问题，并定位到该题 */
+      const fail = (text, el) => { showToast(text, 'error'); if (el) el.focus(); };
+      if (!ign) { fail('请填写第 1 题：你的 QQ 昵称', this.ign); return; }
+      if (!/^[1-9][0-9]{4,11}$/.test(qq)) { fail('第 2 题 QQ 号应为 5~12 位纯数字', this.qq); return; }
+      if (!srv) { fail('请选择第 3 题：你玩的版本（网易服/JAVA服）'); return; }
+      if (!online) { fail('请选择第 4 题：大概上线时间'); return; }
+      if (!skill) { fail('请选择第 5 题：你最擅长什么'); return; }
+      if (!conflict) { fail('请填写第 6 题：发生矛盾时你会怎样处理', this.conflict); return; }
+      if (!promise) { fail('请选择第 7 题：是否接受公平公正原则'); return; }
+      if (promise === '否') { fail('你选择了不接受公平公正原则，暂无法提交入会申请'); return; }
       /* 其余回答合并存入留言字段（后台"其他回答"列展示；同意时自动解析服务器） */
       const detail = '【服务器】' + srv + '\n【矛盾处理】' + conflict + '\n【公平承诺】' + promise + (msg ? '\n【留言】' + msg : '');
+      /* 按钮变 loading 并禁用，防止重复提交 */
+      setBtnLoading(submitBtn, true, '提交中...');
       try {
         await DB.addApp({ ign, email: qq, server: online, skill, msg: detail, time: new Date().toLocaleString('zh-CN'), status: 'pending' });
-        alert('申请提交成功！工会管理将尽快审核，审核通过后会通过 QQ 联系你。');
+        localStorage.removeItem('join_draft');
+        showToast('申请提交成功！管理审核通过后会通过 QQ 联系你', 'success');
         this.reset();
-      } catch (err) { alert('提交失败，请检查网络后重试：' + err.message); }
+      } catch (err) {
+        showToast('提交失败：' + err.message, 'error');
+      } finally {
+        setBtnLoading(submitBtn, false);
+      }
     });
 
     /* ===================== 4. 滚动进入动画 ===================== */

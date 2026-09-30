@@ -29,19 +29,22 @@ const EMAILJS_TEMPLATE_ID = 'template_2ffbops';
 const EMAILJS_PUBLIC_KEY = 'QYJfjyV6dGk1Oe3Vw';
 const EMAILJS_READY = !!(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
 
-/* ===================== 数据层：云端优先，本地回退 ===================== */
+/* ===================== 数据层：云端优先，本地回退 =====================
+ * 云端请求统一走 apiFetch()：12 秒超时 + 自动检查 HTTP 状态，
+ * 失败会抛出带中文说明的错误（实现见本文件底部），不再"假成功/卡死"。
+ */
 const DB = {
   /* --- 入会申请 --- */
   async getApps() {
     if (USE_CLOUD) {
-      const res = await fetch(`${SUPA_URL}/rest/v1/applications?select=id,ign,email,server,skill,msg,time,status&apikey=${SUPA_KEY}&order=id.desc`);
+      const res = await apiFetch('applications?select=id,ign,email,server,skill,msg,time,status&order=id.desc');
       return await res.json();
     }
     return JSON.parse(localStorage.getItem('fr_apps') || '[]').map((a, i) => ({ ...a, id: i }));
   },
   async addApp(data) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/applications?apikey=${SUPA_KEY}`, {
+      await apiFetch('applications', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       }); return;
@@ -51,20 +54,20 @@ const DB = {
   },
   async delApp(id) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/applications?id=eq.${id}&apikey=${SUPA_KEY}`, { method: 'DELETE' }); return;
+      await apiFetch(`applications?id=eq.${id}`, { method: 'DELETE' }); return;
     }
     const apps = JSON.parse(localStorage.getItem('fr_apps') || '[]');
     apps.splice(id, 1); localStorage.setItem('fr_apps', JSON.stringify(apps));
   },
   async clearApps() {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/applications?apikey=${SUPA_KEY}`, { method: 'DELETE' }); return;
+      await apiFetch('applications', { method: 'DELETE' }); return;
     }
     localStorage.removeItem('fr_apps');
   },
   async updateAppStatus(id, status) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/applications?id=eq.${id}&apikey=${SUPA_KEY}`, {
+      await apiFetch(`applications?id=eq.${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       }); return;
@@ -76,7 +79,7 @@ const DB = {
   /* --- 成员公告（单行，id=1） --- */
   async getNotice() {
     if (USE_CLOUD) {
-      const res = await fetch(`${SUPA_URL}/rest/v1/notice?select=content,time&apikey=${SUPA_KEY}`);
+      const res = await apiFetch('notice?select=content,time');
       const arr = await res.json(); return arr[0] || {};
     }
     return JSON.parse(localStorage.getItem('fr_notice') || '{}');
@@ -85,7 +88,7 @@ const DB = {
     const time = new Date().toLocaleString('zh-CN');
     if (USE_CLOUD) {
       /* upsert：有则更新，无则插入 */
-      await fetch(`${SUPA_URL}/rest/v1/notice?apikey=${SUPA_KEY}`, {
+      await apiFetch('notice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
         body: JSON.stringify({ id: 1, content, time })
@@ -97,14 +100,14 @@ const DB = {
   /* --- 网页导航 --- */
   async getLinks() {
     if (USE_CLOUD) {
-      const res = await fetch(`${SUPA_URL}/rest/v1/nav_links?select=id,name,url,desc&apikey=${SUPA_KEY}&order=id.asc`);
+      const res = await apiFetch('nav_links?select=id,name,url,desc&order=id.asc');
       return await res.json();
     }
     return JSON.parse(localStorage.getItem('fr_links') || '[]').map((l, i) => ({ ...l, id: i }));
   },
   async addLink(data) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/nav_links?apikey=${SUPA_KEY}`, {
+      await apiFetch('nav_links', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       }); return;
@@ -114,7 +117,7 @@ const DB = {
   },
   async updateLink(id, field, value) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/nav_links?id=eq.${id}&apikey=${SUPA_KEY}`, {
+      await apiFetch(`nav_links?id=eq.${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: value })
       }); return;
@@ -125,7 +128,7 @@ const DB = {
   },
   async delLink(id) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/nav_links?id=eq.${id}&apikey=${SUPA_KEY}`, { method: 'DELETE' }); return;
+      await apiFetch(`nav_links?id=eq.${id}`, { method: 'DELETE' }); return;
     }
     const links = JSON.parse(localStorage.getItem('fr_links') || '[]');
     links.splice(id, 1); localStorage.setItem('fr_links', JSON.stringify(links));
@@ -134,7 +137,7 @@ const DB = {
   /* --- 工会规则（单行，id=1） --- */
   async getRules() {
     if (USE_CLOUD) {
-      const res = await fetch(`${SUPA_URL}/rest/v1/rules?select=content,time&apikey=${SUPA_KEY}`);
+      const res = await apiFetch('rules?select=content,time');
       const arr = await res.json(); return arr[0] || {};
     }
     return JSON.parse(localStorage.getItem('fr_rules') || '{}');
@@ -142,7 +145,7 @@ const DB = {
   async saveRules(content) {
     const time = new Date().toLocaleString('zh-CN');
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/rules?apikey=${SUPA_KEY}`, {
+      await apiFetch('rules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
         body: JSON.stringify({ id: 1, content, time })
@@ -154,7 +157,7 @@ const DB = {
   /* --- 服务器信息（单行，id=1） --- */
   async getServers() {
     if (USE_CLOUD) {
-      const res = await fetch(`${SUPA_URL}/rest/v1/servers?select=content,time&apikey=${SUPA_KEY}`);
+      const res = await apiFetch('servers?select=content,time');
       const arr = await res.json(); return arr[0] || {};
     }
     return JSON.parse(localStorage.getItem('fr_servers') || '{}');
@@ -162,7 +165,7 @@ const DB = {
   async saveServers(content) {
     const time = new Date().toLocaleString('zh-CN');
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/servers?apikey=${SUPA_KEY}`, {
+      await apiFetch('servers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
         body: JSON.stringify({ id: 1, content, time })
@@ -174,14 +177,14 @@ const DB = {
   /* --- 成员名录 --- */
   async getMembers() {
     if (USE_CLOUD) {
-      const res = await fetch(`${SUPA_URL}/rest/v1/members?select=id,ign,dept,dept2,server,role&apikey=${SUPA_KEY}&order=id.asc`);
+      const res = await apiFetch('members?select=id,ign,dept,dept2,server,role&order=id.asc');
       return await res.json();
     }
     return JSON.parse(localStorage.getItem('fr_members') || '[]').map((m, i) => ({ ...m, id: i }));
   },
   async addMember(data) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/members?apikey=${SUPA_KEY}`, {
+      await apiFetch('members', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       }); return;
@@ -191,7 +194,7 @@ const DB = {
   },
   async delMember(id) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/members?id=eq.${id}&apikey=${SUPA_KEY}`, { method: 'DELETE' }); return;
+      await apiFetch(`members?id=eq.${id}`, { method: 'DELETE' }); return;
     }
     const members = JSON.parse(localStorage.getItem('fr_members') || '[]');
     members.splice(id, 1); localStorage.setItem('fr_members', JSON.stringify(members));
@@ -199,7 +202,7 @@ const DB = {
   /* 修改成员某个字段（如把部门从战斗改成建筑） */
   async updateMember(id, field, value) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/members?id=eq.${id}&apikey=${SUPA_KEY}`, {
+      await apiFetch(`members?id=eq.${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: value })
       }); return;
@@ -212,14 +215,14 @@ const DB = {
   /* --- 提议箱 --- */
   async getSuggestions() {
     if (USE_CLOUD) {
-      const res = await fetch(`${SUPA_URL}/rest/v1/suggestions?select=id,ign,content,time,done&apikey=${SUPA_KEY}&order=id.desc`);
+      const res = await apiFetch('suggestions?select=id,ign,content,time,done&order=id.desc');
       return await res.json();
     }
     return JSON.parse(localStorage.getItem('fr_suggestions') || '[]').map((s, i) => ({ ...s, id: i }));
   },
   async addSuggestion(data) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/suggestions?apikey=${SUPA_KEY}`, {
+      await apiFetch('suggestions', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       }); return;
@@ -229,7 +232,7 @@ const DB = {
   },
   async toggleSuggestion(id, done) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/suggestions?id=eq.${id}&apikey=${SUPA_KEY}`, {
+      await apiFetch(`suggestions?id=eq.${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ done })
       }); return;
@@ -239,7 +242,7 @@ const DB = {
   },
   async delSuggestion(id) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/suggestions?id=eq.${id}&apikey=${SUPA_KEY}`, { method: 'DELETE' }); return;
+      await apiFetch(`suggestions?id=eq.${id}`, { method: 'DELETE' }); return;
     }
     const list = JSON.parse(localStorage.getItem('fr_suggestions') || '[]');
     list.splice(id, 1); localStorage.setItem('fr_suggestions', JSON.stringify(list));
@@ -248,7 +251,7 @@ const DB = {
   /* --- 系统设置（云端存储成员密码和管理员密码） --- */
   async getSettings() {
     if (USE_CLOUD) {
-      const res = await fetch(`${SUPA_URL}/rest/v1/settings?select=key,value&apikey=${SUPA_KEY}`);
+      const res = await apiFetch('settings?select=key,value');
       const arr = await res.json();
       const map = {}; arr.forEach(r => map[r.key] = r.value); return map;
     }
@@ -256,7 +259,7 @@ const DB = {
   },
   async saveSetting(key, value) {
     if (USE_CLOUD) {
-      await fetch(`${SUPA_URL}/rest/v1/settings?apikey=${SUPA_KEY}`, {
+      await apiFetch('settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
         body: JSON.stringify({ key, value })
@@ -269,3 +272,145 @@ const DB = {
 
 /* HTML 转义：防止用户输入的内容破坏页面结构 */
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+/* ============================================================
+ * 通用基础设施（三个页面共享）：
+ * apiFetch 请求封装 / Toast 提示 / 加载动画 / 失败重试 / 按钮loading
+ * ============================================================ */
+
+/* ---------- 云端请求封装：12秒超时 + HTTP 状态检查 ---------- */
+const REQ_TIMEOUT = 12000;
+async function apiFetch(path, options) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(function () { ctrl.abort(); }, REQ_TIMEOUT);
+  let res;
+  try {
+    res = await fetch(`${SUPA_URL}/rest/v1/${path}${path.includes('?') ? '&' : '?'}apikey=${SUPA_KEY}`,
+      Object.assign({}, options, { signal: ctrl.signal }));
+  } catch (e) {
+    clearTimeout(timer);
+    throw new Error(e.name === 'AbortError' ? '请求超时，请检查网络后重试' : '网络连接失败，请检查网络后重试');
+  }
+  clearTimeout(timer);
+  if (!res.ok) {
+    let detail = '';
+    try { const j = await res.json(); detail = j.message || j.error_description || ''; } catch (_) {}
+    throw new Error(detail || `服务器开小差了（错误码 ${res.status}），请稍后重试`);
+  }
+  return res;
+}
+
+/* ---------- 敏感词库（辱骂/脏话/色情类；可按需自行增删） ---------- */
+const BAD_WORDS = [
+  '草泥马', '操你', '艹你', '日你', '你妈', '他妈', '妈的', '妈的',
+  '傻逼', '煞笔', '傻b', 'sb', '弱智', '脑残', '王八蛋', '混蛋', '狗日',
+  '狗东西', '婊子', '妓女', '鸡巴', '几把', 'jb', '贱人', '贱货', '去死',
+  '装逼', '撕逼', '屌丝', '约炮', '做爱', '色情', '裸体', '色逼', '下流'
+];
+/* 命中则返回该词，否则返回空串（统一转小写匹配，兼容中英） */
+function containsBadWord(text) {
+  const t = String(text || '').toLowerCase();
+  for (let i = 0; i < BAD_WORDS.length; i++) {
+    if (t.indexOf(BAD_WORDS[i].toLowerCase()) !== -1) return BAD_WORDS[i];
+  }
+  return '';
+}
+
+/* ---------- 通用样式（Toast / Spinner / 重试 / 抖动） ---------- */
+(function injectCommonCSS() {
+  const css = `
+  /* ---- Toast 轻提示（右上角，自动消失，替代 alert） ---- */
+  #cxToastWrap { position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+  .cx-toast { pointer-events: auto; min-width: 240px; max-width: 380px; padding: 12px 18px; border-radius: 10px; font-size: 14px; line-height: 1.5;
+    color: #fff; background: #34495e; box-shadow: 0 8px 24px rgba(0,0,0,.18); display: flex; align-items: center; gap: 10px;
+    animation: cxToastIn .3s ease; word-break: break-all; }
+  .cx-toast.success { background: #27ae60; }
+  .cx-toast.error   { background: #e74c3c; }
+  .cx-toast.info    { background: #2980b9; }
+  .cx-toast.out     { animation: cxToastOut .3s ease forwards; }
+  .cx-toast .cx-ico { flex: 0 0 auto; font-size: 16px; font-weight: bold; }
+  @keyframes cxToastIn  { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes cxToastOut { to   { opacity: 0; transform: translateX(30px); } }
+  @media (max-width: 600px) { #cxToastWrap { left: 12px; right: 12px; top: 12px; } .cx-toast { max-width: none; } }
+
+  /* ---- 加载动画（旋转圆环，替代纯文字"加载中"） ---- */
+  .cx-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 30px 16px; color: #5d7079; font-size: 14px; }
+  .cx-spinner { width: 22px; height: 22px; border: 3px solid #cfe0ea; border-top-color: #0c7bb3; border-radius: 50%; animation: cxSpin .8s linear infinite; flex: 0 0 auto; }
+  .cx-spinner.cx-spinner-sm { width: 15px; height: 15px; border-width: 2px; }
+  @keyframes cxSpin { to { transform: rotate(360deg); } }
+  /* 网格容器内的加载/失败提示占满整行 */
+  .roster-grid > .cx-loading, .nav-links-grid > .cx-loading, .cx-row-loading .cx-loading { grid-column: 1 / -1; }
+
+  /* ---- 失败重试 ---- */
+  .cx-retry { flex-direction: column; gap: 12px; }
+  .cx-retry p { margin: 0; color: #c0392b; }
+  .cx-retry-btn { padding: 8px 22px; border: none; border-radius: 20px; background: #0c7bb3; color: #fff; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .cx-retry-btn:hover { background: #085a8a; }
+
+  /* ---- 输入框错误抖动 ---- */
+  @keyframes cxShake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-7px); } 40%,80% { transform: translateX(7px); } }
+  .shake { animation: cxShake .4s ease; border-color: #c0392b !important; }
+
+  /* ---- 按钮 loading 状态 ---- */
+  button.cx-btn-loading { opacity: .75; cursor: not-allowed; }
+  button.cx-btn-loading { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+
+  /* ---- 字数统计 ---- */
+  .char-count { text-align: right; font-size: 12px; color: #8aa0ab; margin-top: 4px; }
+  .char-count.warn { color: #e67e22; }
+  .char-count.over { color: #c0392b; }
+  `;
+  const style = document.createElement('style');
+  style.setAttribute('data-cx-common', '1');
+  style.textContent = css;
+  (document.head || document.getElementsByTagName('head')[0]).appendChild(style);
+})();
+
+/* ---------- Toast：showToast('文字', 'success'|'error'|'info') ---------- */
+function showToast(msg, type) {
+  let wrap = document.getElementById('cxToastWrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'cxToastWrap';
+    document.body.appendChild(wrap);
+  }
+  const t = document.createElement('div');
+  t.className = 'cx-toast ' + (type || 'info');
+  const ico = type === 'success' ? '✓' : type === 'error' ? '✕' : 'i';
+  t.innerHTML = `<span class="cx-ico">${ico}</span><span>${esc(msg)}</span>`;
+  wrap.appendChild(t);
+  setTimeout(function () {
+    t.classList.add('out');
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+  }, 3200);
+}
+
+/* ---------- 加载 HTML：loadingHTML('加载中...') ---------- */
+function loadingHTML(text) {
+  return `<div class="cx-loading"><span class="cx-spinner"></span><span>${esc(text || '加载中...')}</span></div>`;
+}
+
+/* ---------- 容器内显示"加载失败 + 点击重试" ---------- */
+function showRetry(el, retryFn, text) {
+  el.innerHTML = `<div class="cx-loading cx-retry"><p>${esc(text || '加载失败，请检查网络')}</p><button type="button" class="cx-retry-btn">点击重试</button></div>`;
+  const btn = el.querySelector('.cx-retry-btn');
+  if (btn) btn.addEventListener('click', function () {
+    el.innerHTML = loadingHTML('重新加载中...');
+    retryFn();
+  });
+}
+
+/* ---------- 按钮 loading：禁用+转圈，结束后恢复原内容 ---------- */
+function setBtnLoading(btn, loading, loadingText) {
+  if (!btn) return;
+  if (loading) {
+    if (!btn.dataset.cxOrigin) btn.dataset.cxOrigin = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add('cx-btn-loading');
+    btn.innerHTML = `<span class="cx-spinner cx-spinner-sm"></span><span>${esc(loadingText || '处理中...')}</span>`;
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('cx-btn-loading');
+    if (btn.dataset.cxOrigin) { btn.innerHTML = btn.dataset.cxOrigin; delete btn.dataset.cxOrigin; }
+  }
+}

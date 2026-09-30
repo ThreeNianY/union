@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>成员专区 · 潮汐聚澜工会</title>
+  <meta name="description" content="潮汐聚澜 Minecraft 工会成员专区，查看公告、规则、服务器信息、成员名录与提议箱。" />
+  <meta property="og:title" content="潮汐聚澜 · 成员专区" />
+  <meta property="og:description" content="潮汐聚澜 Minecraft 工会成员专区，查看最新公告、工会规则与成员名录。" />
+  <meta property="og:image" content="https://cxjlfsn.dpdns.org/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://cxjlfsn.dpdns.org/member/" />
+  <title>潮汐聚澜 · 成员专区</title>
   <style>
     /* ========== 全局设计变量 ========== */
     :root {
@@ -122,7 +128,7 @@
       <div class="container">
         <h2 class="sec-title">成员<span>公告</span></h2>
         <p class="sec-sub">工会最新通知与内部资讯</p>
-        <div class="notice-box" id="noticeBox"><p class="notice-empty">加载中...</p></div>
+        <div class="notice-box" id="noticeBox"><div class="cx-loading"><span class="cx-spinner"></span><span>加载中...</span></div></div>
       </div>
     </section>
 
@@ -131,7 +137,7 @@
       <div class="container">
         <h2 class="sec-title">工会<span>规则</span></h2>
         <p class="sec-sub">全体成员共同遵守，共建和谐工会</p>
-        <div class="notice-box" id="rulesBox"><p class="notice-empty">加载中...</p></div>
+        <div class="notice-box" id="rulesBox"><div class="cx-loading"><span class="cx-spinner"></span><span>加载中...</span></div></div>
       </div>
     </section>
 
@@ -140,7 +146,7 @@
       <div class="container">
         <h2 class="sec-title">服务器<span>信息</span></h2>
         <p class="sec-sub">各服务器地址与版本，按此入服不迷路</p>
-        <div class="notice-box" id="serversBox"><p class="notice-empty">加载中...</p></div>
+        <div class="notice-box" id="serversBox"><div class="cx-loading"><span class="cx-spinner"></span><span>加载中...</span></div></div>
       </div>
     </section>
 
@@ -149,7 +155,7 @@
       <div class="container">
         <h2 class="sec-title">成员<span>名录</span></h2>
         <p class="sec-sub">按部门分类，找人对口不再难</p>
-        <div class="roster-grid" id="rosterGrid"><p class="notice-empty">加载中...</p></div>
+        <div class="roster-grid" id="rosterGrid"><div class="cx-loading"><span class="cx-spinner"></span><span>加载中...</span></div></div>
       </div>
     </section>
 
@@ -160,7 +166,7 @@
         <p class="sec-sub">对工会有什么想法或建议？提交给管理层</p>
         <form id="suggestForm" class="suggest-form">
           <div class="form-group"><label>你的游戏 ID（选填，不填则匿名）</label><input type="text" name="ign" placeholder="留空则匿名提交" /></div>
-          <div class="form-group"><label>建议内容</label><textarea name="content" rows="4" placeholder="写下你的建议或想法..." required></textarea></div>
+          <div class="form-group"><label>建议内容 <small style="color:#8aa0ab;font-weight:normal;">（5~500 字，请文明发言）</small></label><textarea name="content" rows="4" maxlength="500" placeholder="写下你的建议或想法..." required></textarea><div class="char-count"><span id="sugCount">0</span>/500</div></div>
           <button type="submit" class="btn">提交建议</button>
         </form>
       </div>
@@ -171,7 +177,7 @@
       <div class="container">
         <h2 class="sec-title">网页<span>导航</span></h2>
         <p class="sec-sub">工会成员常用站点快捷入口</p>
-        <div class="nav-links-grid" id="navLinksGrid"><p class="notice-empty">加载中...</p></div>
+        <div class="nav-links-grid" id="navLinksGrid"><div class="cx-loading"><span class="cx-spinner"></span><span>加载中...</span></div></div>
       </div>
     </section>
   </div>
@@ -195,7 +201,7 @@
         const box = document.getElementById('noticeBox');
         if (!data.content) { box.innerHTML = '<p class="notice-empty">暂无公告，请留意后续通知。</p>'; return; }
         box.innerHTML = `<div class="meta">发布时间：${esc(data.time || '—')}</div><div class="content">${esc(data.content)}</div>`;
-      } catch (e) { document.getElementById('noticeBox').innerHTML = '<p class="notice-empty">加载失败，请稍后刷新重试</p>'; }
+      } catch (e) { showRetry(document.getElementById('noticeBox'), renderNotice); }
     }
 
     /* ===================== 渲染：网页导航 ===================== */
@@ -203,9 +209,9 @@
       try {
         const links = await DB.getLinks();
         const grid = document.getElementById('navLinksGrid');
-        if (!links.length) { grid.innerHTML = '<p class="notice-empty">暂无导航链接。</p>'; return; }
+        if (!links.length) { grid.innerHTML = '<p class="notice-empty" style="grid-column:1/-1;">暂无导航链接。</p>'; return; }
         grid.innerHTML = links.map(l => `<div class="nav-card"><h3>${esc(l.name)}</h3><p>${esc(l.desc || '')}</p><a class="visit" href="${esc(l.url)}" target="_blank" rel="noopener">前往访问</a></div>`).join('');
-      } catch (e) { document.getElementById('navLinksGrid').innerHTML = '<p class="notice-empty">加载失败，请稍后刷新重试</p>'; }
+      } catch (e) { showRetry(document.getElementById('navLinksGrid'), renderNavLinks); }
     }
 
     /* ===================== 渲染：工会规则 / 服务器信息 ===================== */
@@ -215,7 +221,7 @@
         const box = document.getElementById(boxId);
         if (!data.content) { box.innerHTML = `<p class="notice-empty">${emptyText}</p>`; return; }
         box.innerHTML = `<div class="meta">更新时间：${esc(data.time || '—')}</div><div class="content">${esc(data.content)}</div>`;
-      } catch (e) { document.getElementById(boxId).innerHTML = '<p class="notice-empty">加载失败，请稍后刷新重试</p>'; }
+      } catch (e) { showRetry(document.getElementById(boxId), () => renderSingleBox(getter, boxId, emptyText)); }
     }
 
     /* ===================== 渲染：成员名录（管理层置顶 + 按部门分组） ===================== */
@@ -244,7 +250,7 @@
           return `<div class="roster-dept"><h3>${dept}<span class="count">${list.length} 人</span></h3><ul>${items}</ul></div>`;
         }).join('');
         grid.innerHTML = mgmtCard + deptCards;
-      } catch (e) { document.getElementById('rosterGrid').innerHTML = '<p class="notice-empty">加载失败，请稍后刷新重试</p>'; }
+      } catch (e) { showRetry(document.getElementById('rosterGrid'), renderRoster); }
     }
 
     /* ===================== 解锁：隐藏验证卡片，显示专区内容 ===================== */
@@ -265,28 +271,56 @@
     /* ===================== 密码验证：与云端存储的成员密码比对 ===================== */
     document.getElementById('gateForm').addEventListener('submit', async e => {
       e.preventDefault();
+      const pwdInput = e.target.pwd;
+      const btn = e.target.querySelector('button[type=submit]');
       gateErr.textContent = '';
+      if (!pwdInput.value.trim()) { gateErr.textContent = '请输入密码'; pwdInput.classList.add('shake'); setTimeout(() => pwdInput.classList.remove('shake'), 450); return; }
+      setBtnLoading(btn, true, '验证中...');
       try {
         const settings = await DB.getSettings();
         const memberPwd = settings.member_pwd || '';
         if (!memberPwd) { gateErr.textContent = '成员密码尚未设置，请联系管理员'; return; }
-        if (e.target.pwd.value === memberPwd) {
+        if (pwdInput.value === memberPwd) {
           sessionStorage.setItem('fr_member', '1');   /* 记住解锁状态（本次会话内有效） */
           unlock();
-        } else { gateErr.textContent = '密码错误，请重试'; }
-      } catch (err) { gateErr.textContent = '网络错误，请稍后重试'; }
+        } else {
+          gateErr.textContent = '密码错误，请检查后重试';
+          pwdInput.classList.add('shake');
+          setTimeout(() => pwdInput.classList.remove('shake'), 450);
+          pwdInput.select();
+        }
+      } catch (err) { gateErr.textContent = err.message || '网络错误，请稍后重试'; }
+      finally { setBtnLoading(btn, false); }
     });
 
-    /* ===================== 提议箱：提交建议 ===================== */
-    document.getElementById('suggestForm').addEventListener('submit', async function (e) {
+    /* ===================== 提议箱：字数统计 + 校验 + 提交反馈 ===================== */
+    const sugForm = document.getElementById('suggestForm');
+    const sugCount = document.getElementById('sugCount');
+    sugForm.content.addEventListener('input', function () {
+      const len = this.value.length;
+      sugCount.textContent = len;
+      const cc = sugCount.parentElement;
+      cc.classList.toggle('warn', len > 450 && len <= 500);
+      cc.classList.toggle('over', len > 500);
+    });
+    sugForm.addEventListener('submit', async function (e) {
       e.preventDefault();
+      const btn = this.querySelector('button[type=submit]');
+      const ign = this.ign.value.trim();
       const content = this.content.value.trim();
-      if (!content) { alert('请填写建议内容'); return; }
+      if (content.length < 5) { showToast('建议内容至少 5 个字，请写具体一点', 'error'); this.content.focus(); return; }
+      if (content.length > 500) { showToast('建议内容最多 500 字，请精简后再提交', 'error'); this.content.focus(); return; }
+      const bad = containsBadWord(content) || containsBadWord(ign);
+      if (bad) { showToast('内容包含不当用语，请修改后再提交', 'error'); this.content.focus(); return; }
+      setBtnLoading(btn, true, '提交中...');
       try {
-        await DB.addSuggestion({ ign: this.ign.value.trim() || '匿名', content, time: new Date().toLocaleString('zh-CN'), done: false });
-        alert('建议提交成功，感谢你的反馈！');
+        await DB.addSuggestion({ ign: ign || '匿名', content, time: new Date().toLocaleString('zh-CN'), done: false });
+        showToast('建议提交成功，感谢你的反馈！', 'success');
         this.reset();
-      } catch (err) { alert('提交失败，请检查网络后重试：' + err.message); }
+        sugCount.textContent = '0';
+        sugCount.parentElement.classList.remove('warn', 'over');
+      } catch (err) { showToast('提交失败：' + err.message, 'error'); }
+      finally { setBtnLoading(btn, false); }
     });
   </script>
 </body>
