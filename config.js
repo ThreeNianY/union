@@ -271,7 +271,7 @@ const DB = {
 };
 
 /* HTML 转义：防止用户输入的内容破坏页面结构 */
-function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
 /* ============================================================
  * 通用基础设施（三个页面共享）：
@@ -413,4 +413,49 @@ function setBtnLoading(btn, loading, loadingText) {
     btn.classList.remove('cx-btn-loading');
     if (btn.dataset.cxOrigin) { btn.innerHTML = btn.dataset.cxOrigin; delete btn.dataset.cxOrigin; }
   }
+}
+
+/* ============================================================
+ * 密码防暴力尝试（成员页 / 管理后台共用）
+ * 规则：同一浏览器连续输错 5 次密码，锁定 24 小时
+ * 说明：基于 localStorage，防的是"随手乱试"的暴力破解；
+ *       真正的安全边界在云端数据库权限，这里是第一道减速带
+ * ============================================================ */
+const GATE_MAX_FAILS = 5;                 /* 最多允许连续输错次数 */
+const GATE_LOCK_MS = 24 * 60 * 60 * 1000; /* 锁定时长：24 小时 */
+
+/* 返回剩余锁定毫秒数；未锁定返回 0 */
+function gateLockedMs(lockKey) {
+  try {
+    const until = parseInt(localStorage.getItem(lockKey) || '0', 10);
+    const left = until - Date.now();
+    if (left <= 0) { localStorage.removeItem(lockKey); return 0; }
+    return left;
+  } catch (_) { return 0; }
+}
+
+/* 记录一次输错；返回 { locked, leftMs, leftFails } */
+function gateRecordFail(failKey, lockKey) {
+  try {
+    const fails = (parseInt(localStorage.getItem(failKey) || '0', 10) || 0) + 1;
+    if (fails >= GATE_MAX_FAILS) {
+      localStorage.setItem(lockKey, String(Date.now() + GATE_LOCK_MS));
+      localStorage.removeItem(failKey);
+      return { locked: true, leftMs: GATE_LOCK_MS, leftFails: 0 };
+    }
+    localStorage.setItem(failKey, String(fails));
+    return { locked: false, leftMs: 0, leftFails: GATE_MAX_FAILS - fails };
+  } catch (_) { return { locked: false, leftMs: 0, leftFails: GATE_MAX_FAILS }; }
+}
+
+/* 验证成功后清除输错记录 */
+function gateClearFail(failKey, lockKey) {
+  try { localStorage.removeItem(failKey); localStorage.removeItem(lockKey); } catch (_) {}
+}
+
+/* 把毫秒数格式化成"X小时X分钟"（用于锁定提示文案） */
+function fmtLockTime(ms) {
+  const totalMin = Math.ceil(ms / 60000);
+  const h = Math.floor(totalMin / 60), m = totalMin % 60;
+  return h > 0 ? `${h} 小时${m > 0 ? ' ' + m + ' 分钟' : ''}` : `${m} 分钟`;
 }

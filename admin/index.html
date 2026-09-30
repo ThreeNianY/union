@@ -269,7 +269,7 @@
   <!-- Tesseract.js：浏览器端 OCR 图片文字识别（免费，无需密钥） -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <!-- 公共配置与数据层 -->
-  <script src="../config.js?v=2"></script>
+  <script src="../config.js?v=3"></script>
   <script>
     const gate = document.getElementById('gate');
     const adminPanel = document.getElementById('adminPanel');
@@ -298,18 +298,43 @@
     /* 本次会话已登录过则直接进入（关闭浏览器后失效） */
     if (sessionStorage.getItem('fr_admin') === '1') enterAdmin();
 
-    /* 密码验证：与云端存储的管理员密码比对 */
-    document.getElementById('gateForm').addEventListener('submit', async e => {
+    /* 密码验证：与云端存储的管理员密码比对（连续输错 5 次锁定 24 小时） */
+    const gateForm = document.getElementById('gateForm');
+    const gateBtn = gateForm.querySelector('button[type=submit]');
+    const A_FAIL_KEY = 'fr_admin_gate_fail', A_LOCK_KEY = 'fr_admin_gate_lock';
+
+    /* 锁定状态：禁用输入框和按钮，并提示剩余时间 */
+    function applyAdminLock() {
+      const left = gateLockedMs(A_LOCK_KEY);
+      if (left > 0) {
+        gateForm.pwd.disabled = true;
+        gateBtn.disabled = true;
+        gateErr.textContent = '密码连续输错次数过多，本浏览器已锁定，请 ' + fmtLockTime(left) + ' 后再试';
+        return true;
+      }
+      gateForm.pwd.disabled = false;
+      gateBtn.disabled = false;
+      return false;
+    }
+    applyAdminLock();   /* 页面打开时先检查是否处于锁定期 */
+
+    gateForm.addEventListener('submit', async e => {
       e.preventDefault();
+      if (applyAdminLock()) return;   /* 锁定中直接拒绝 */
       gateErr.textContent = '';
       try {
         const settings = await DB.getSettings();
         const adminPwd = settings.admin_pwd || '';
         if (!adminPwd) { gateErr.textContent = '管理员密码尚未设置，请先在数据库中配置'; return; }
         if (e.target.pwd.value === adminPwd) {
+          gateClearFail(A_FAIL_KEY, A_LOCK_KEY);   /* 验证成功，清除输错记录 */
           sessionStorage.setItem('fr_admin', '1');   /* 记住登录状态（本次会话内有效） */
           enterAdmin();
-        } else { gateErr.textContent = '密码错误，请重试'; }
+        } else {
+          const r = gateRecordFail(A_FAIL_KEY, A_LOCK_KEY);
+          if (r.locked) { applyAdminLock(); }
+          else { gateErr.textContent = '密码错误，还可尝试 ' + r.leftFails + ' 次（连续输错 5 次将锁定 24 小时）'; }
+        }
       } catch (err) { gateErr.textContent = '网络错误，请稍后重试'; }
     });
 
