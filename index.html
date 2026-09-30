@@ -10,12 +10,14 @@
       --blue: #0c7bb3; --blue-dark: #085a8a; --cyan: #4dd0e1; --gold: #e8b84b;
       --text: #2a3a44; --gray: #5d7079; --bg: #ffffff; --bg-soft: #f0f7fb;
       --shadow: 0 6px 20px rgba(12, 123, 179, .12); --radius: 12px;
+      --sidebar-w: 220px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; color: var(--text); line-height: 1.7; background: var(--bg); }
+    body.no-scroll { overflow: hidden; }  /* 手机端抽屉打开时锁定背景滚动 */
     a { text-decoration: none; color: inherit; }
-    section { padding: 70px 20px; }
+    section { padding: 70px 24px; }
     .container { max-width: 1100px; margin: 0 auto; }
     /* 通用按钮样式（首屏按钮 / 表单提交按钮） */
     .btn { display: inline-block; padding: 9px 22px; border-radius: 30px; background: var(--blue); color: #fff !important; transition: background .2s; border: none; cursor: pointer; font-family: inherit; font-size: 15px; }
@@ -24,17 +26,36 @@
     .sec-title span { color: var(--blue); }
     .sec-sub { text-align: center; color: var(--gray); margin-bottom: 45px; }
 
-    /* 导航栏 */
-    header { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.95); box-shadow: var(--shadow); }
-    .nav { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 34px; padding: 14px 20px; }
-    .logo { font-size: 20px; font-weight: bold; color: var(--blue); }
-    .logo small { color: var(--gray); font-size: 12px; font-weight: normal; }
-    .nav-links { display: flex; gap: 24px; list-style: none; align-items: center; }
-    .nav-links > li > a { font-size: 15px; transition: color .2s; }
-    .nav-links > li > a:hover { color: var(--blue); }
-    .nav-links > li > a.nav-btn { background: var(--blue); color: #fff; border-radius: 30px; padding: 8px 18px; }
-    .nav-links > li > a.nav-btn:hover { background: var(--blue-dark); }
-    .menu-btn { display: none; font-size: 24px; background: none; border: none; cursor: pointer; color: var(--blue); }
+    /* ========== 左侧边导航栏（桌面端常驻，手机端为抽屉） ========== */
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w); z-index: 300;
+      display: flex; flex-direction: column; padding: 26px 16px;
+      background: linear-gradient(180deg, var(--blue-dark), var(--blue));
+      transition: transform .3s;
+    }
+    .logo { color: #fff; font-size: 20px; font-weight: bold; padding: 4px 10px 20px; border-bottom: 1px solid rgba(255,255,255,.18); margin-bottom: 16px; }
+    .logo small { display: block; color: rgba(255,255,255,.65); font-size: 12px; font-weight: normal; letter-spacing: 2px; margin-top: 2px; }
+    .nav-links { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .nav-links a { display: block; padding: 12px 14px; border-radius: 10px; color: rgba(255,255,255,.92); font-size: 15px; transition: background .2s; }
+    .nav-links a:hover { background: rgba(255,255,255,.14); color: #fff; }
+    .nav-links a.active { background: rgba(255,255,255,.2); color: #fff; font-weight: bold; }
+    .nav-links a.nav-btn { background: var(--gold); color: #3a2a00 !important; text-align: center; font-weight: bold; margin-top: 12px; }
+    .nav-links a.nav-btn:hover { background: #f3c862; }
+    .side-foot { margin-top: auto; color: rgba(255,255,255,.5); font-size: 12px; padding: 0 10px; }
+
+    /* 主内容区：桌面端让出侧栏宽度 */
+    .page { margin-left: var(--sidebar-w); }
+
+    /* 手机端：汉堡按钮（固定左上角）+ 半透明遮罩 */
+    .menu-btn {
+      display: none; position: fixed; top: 14px; left: 14px; z-index: 400;
+      width: 44px; height: 44px; border: none; border-radius: 50%;
+      background: rgba(255,255,255,.95); box-shadow: var(--shadow);
+      color: var(--blue); font-size: 22px; cursor: pointer;
+      align-items: center; justify-content: center;
+    }
+    .mask { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 250; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
+    .mask.show { opacity: 1; visibility: visible; }
 
     /* 首屏 */
     .hero { min-height: 480px; display: flex; align-items: center; text-align: center; color: #fff; background: linear-gradient(135deg, rgba(8,90,138,.92), rgba(12,123,179,.92)), radial-gradient(circle at 20% 30%, var(--cyan), transparent 45%), var(--blue); }
@@ -73,114 +94,150 @@
     .admin-link a { color: #5d7180; }
     .admin-link a:hover { color: #9fb3bf; text-decoration: underline; }
 
-    #toTop { position: fixed; right: 24px; bottom: 24px; width: 44px; height: 44px; border: none; border-radius: 50%; background: var(--blue); color: #fff; font-size: 20px; cursor: pointer; display: none; box-shadow: var(--shadow); }
+    #toTop { position: fixed; right: 24px; bottom: 24px; width: 44px; height: 44px; border: none; border-radius: 50%; background: var(--blue); color: #fff; font-size: 20px; cursor: pointer; display: none; box-shadow: var(--shadow); z-index: 200; }
     .reveal { opacity: 0; transform: translateY(24px); transition: all .6s; }
     .reveal.show { opacity: 1; transform: none; }
 
     @media (max-width: 900px) {
       .cards { grid-template-columns: 1fr 1fr; }
       .about-wrap { grid-template-columns: 1fr; display: grid; }
+      /* 手机端：内容占满宽度，侧栏变为抽屉默认藏在左侧 */
+      .page { margin-left: 0; }
+      .menu-btn { display: flex; }
+      .sidebar { width: 264px; transform: translateX(-100%); box-shadow: 4px 0 24px rgba(0,0,0,.25); }
+      .sidebar.open { transform: none; }
     }
     @media (max-width: 600px) {
-      .menu-btn { display: block; }
-      .nav-links { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; flex-direction: column; padding: 18px 0; box-shadow: var(--shadow); gap: 18px; align-items: center; }
-      .nav-links.open { display: flex; }
-      .hero h1 { font-size: 30px; }
+      section { padding: 56px 16px; }
+      .hero h1 { font-size: 30px; letter-spacing: 2px; }
+      /* 首屏两个按钮手机端改为上下居中排列，更好点按 */
+      .hero .btn { display: block; width: fit-content; margin: 0 auto 12px; }
+      .hero .btn.outline { margin-left: auto; }
       .cards { grid-template-columns: 1fr; }
+      /* 输入框 16px：防止 iOS Safari 聚焦时自动放大页面 */
+      .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
+      .stat b { font-size: 26px; }
+      #toTop { right: 16px; bottom: 16px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- 导航栏 -->
-  <header>
-    <nav class="nav">
-      <div class="logo">潮汐聚澜 <small>Minecraft 工会</small></div>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="#home">首页</a></li>
-        <li><a href="#about">工会简介</a></li>
-        <li><a href="#service">部门设置</a></li>
-        <li><a href="#join">入会申请</a></li>
-        <li><a class="nav-btn" href="member.html">成员专区</a></li>
-      </ul>
-      <button class="menu-btn" id="menuBtn">☰</button>
-    </nav>
-  </header>
+  <!-- 手机端汉堡按钮与遮罩 -->
+  <button class="menu-btn" id="menuBtn" aria-label="打开菜单">☰</button>
+  <div class="mask" id="mask"></div>
 
-  <!-- 首屏 -->
-  <section class="hero" id="home">
-    <div class="container">
-      <h1>潮汐聚澜</h1>
-      <div class="en">CHAOS JU LAN</div>
-      <p>汇聚潮汐之力 · 共建温馨工会 —— Minecraft 工会</p>
-      <a href="#join" class="btn">申请入会</a>
-      <a href="#about" class="btn outline">了解工会</a>
-    </div>
-  </section>
+  <!-- 左侧边导航栏（手机端为抽屉式滑出） -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">潮汐聚澜<small>MINECRAFT 工会</small></div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home" class="active">首页</a></li>
+      <li><a href="#about">工会简介</a></li>
+      <li><a href="#service">部门设置</a></li>
+      <li><a href="#join">入会申请</a></li>
+      <li><a class="nav-btn" href="member/">成员专区</a></li>
+    </ul>
+    <div class="side-foot">© 2026 潮汐聚澜工会</div>
+  </aside>
 
-  <!-- 工会简介 -->
-  <section id="about">
-    <div class="container about-wrap reveal">
-      <div class="about-text">
-        <h2 class="sec-title">工会<span>简介</span></h2>
-        <p>潮汐聚澜是一个友好温馨的 Minecraft 游戏工会，目前有 50 位左右的成员，常驻网易与 JAVA 两个平台共 3 个服务器。大家聚在一起建房子、探险、打怪、研究红石，秉承"自由、协作、共建、共荣"的精神。</p>
-        <p>工会设有战斗、建筑、资源收集、生电四大部门，各司其职、互相配合，让每一位成员都能在方块世界找到属于自己的位置。</p>
+  <div class="page">
+    <!-- 首屏 -->
+    <section class="hero" id="home">
+      <div class="container">
+        <h1>潮汐聚澜</h1>
+        <div class="en">CHAOS JU LAN</div>
+        <p>汇聚潮汐之力 · 共建温馨工会 —— Minecraft 工会</p>
+        <a href="#join" class="btn">申请入会</a>
+        <a href="#about" class="btn outline">了解工会</a>
       </div>
-      <div class="stats">
-        <div class="stat"><b>50+</b><span>工会成员</span></div>
-        <div class="stat"><b>3</b><span>入驻服务器</span></div>
+    </section>
+
+    <!-- 工会简介 -->
+    <section id="about">
+      <div class="container about-wrap reveal">
+        <div class="about-text">
+          <h2 class="sec-title">工会<span>简介</span></h2>
+          <p>潮汐聚澜是一个友好温馨的 Minecraft 游戏工会，目前有 50 位左右的成员，常驻网易与 JAVA 两个平台共 3 个服务器。大家聚在一起建房子、探险、打怪、研究红石，秉承"自由、协作、共建、共荣"的精神。</p>
+          <p>工会设有战斗、建筑、资源收集、生电四大部门，各司其职、互相配合，让每一位成员都能在方块世界找到属于自己的位置。</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><b>50+</b><span>工会成员</span></div>
+          <div class="stat"><b>3</b><span>入驻服务器</span></div>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- 部门设置 -->
-  <section id="service" class="activities">
-    <div class="container">
-      <h2 class="sec-title">部门<span>设置</span></h2>
-      <p class="sec-sub">四大部门各司其职，总有一款适合你</p>
-      <div class="cards">
-        <div class="card reveal"><h3>战斗部门</h3><p>冲锋陷阵、护卫家园，负责PVP对抗与怪物讨伐，是工会的利刃。</p></div>
-        <div class="card reveal"><h3>建筑部门</h3><p>规划设计、精雕细琢，负责工会建筑与基地建造，是工会的画笔。</p></div>
-        <div class="card reveal"><h3>资源部门</h3><p>挖矿伐木、收集物资，负责工会资源储备与后勤补给，是工会的血脉。</p></div>
-        <div class="card reveal"><h3>生电部门</h3><p>红石机械、自动化农场，负责技术支持与设施研发，是工会的大脑。</p></div>
+    <!-- 部门设置 -->
+    <section id="service" class="activities">
+      <div class="container">
+        <h2 class="sec-title">部门<span>设置</span></h2>
+        <p class="sec-sub">四大部门各司其职，总有一款适合你</p>
+        <div class="cards">
+          <div class="card reveal"><h3>战斗部门</h3><p>冲锋陷阵、护卫家园，负责PVP对抗与怪物讨伐，是工会的利刃。</p></div>
+          <div class="card reveal"><h3>建筑部门</h3><p>规划设计、精雕细琢，负责工会建筑与基地建造，是工会的画笔。</p></div>
+          <div class="card reveal"><h3>资源部门</h3><p>挖矿伐木、收集物资，负责工会资源储备与后勤补给，是工会的血脉。</p></div>
+          <div class="card reveal"><h3>生电部门</h3><p>红石机械、自动化农场，负责技术支持与设施研发，是工会的大脑。</p></div>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- 入会申请（公开） -->
-  <section id="join">
-    <div class="container">
-      <h2 class="sec-title">入会<span>申请</span></h2>
-      <p class="sec-sub">填写信息加入工会，开启你的方块冒险</p>
-      <form id="joinForm">
-        <div class="form-group"><label>游戏 ID（IGN）</label><input type="text" name="ign" placeholder="请输入你的 Minecraft 游戏名" required /></div>
-        <div class="form-group"><label>邮箱（用于接收审核结果）</label><input type="email" name="email" placeholder="例如：123456789@qq.com" required /></div>
-        <div class="form-group"><label>所在服务器</label><select name="server" required><option value="">请选择你常驻的服务器</option><option>网易服（手游/端游）</option><option>JAVA服</option><option>其他（请在留言注明）</option></select></div>
-        <div class="form-group"><label>意向部门</label><select name="skill" required><option value="">请选择你想加入的部门</option><option>战斗部门</option><option>建筑部门</option><option>资源部门</option><option>生电部门</option><option>还不确定</option></select></div>
-        <div class="form-group"><label>入会留言（选填）</label><textarea name="msg" rows="3" placeholder="想对工会说的话"></textarea></div>
-        <button type="submit" class="btn">提交申请</button>
-      </form>
-    </div>
-  </section>
+    <!-- 入会申请（公开） -->
+    <section id="join">
+      <div class="container">
+        <h2 class="sec-title">入会<span>申请</span></h2>
+        <p class="sec-sub">填写信息加入工会，开启你的方块冒险</p>
+        <form id="joinForm">
+          <div class="form-group"><label>游戏 ID（IGN）</label><input type="text" name="ign" placeholder="请输入你的 Minecraft 游戏名" required /></div>
+          <div class="form-group"><label>邮箱（用于接收审核结果）</label><input type="email" name="email" placeholder="例如：123456789@qq.com" required /></div>
+          <div class="form-group"><label>所在服务器</label><select name="server" required><option value="">请选择你常驻的服务器</option><option>网易服（手游/端游）</option><option>JAVA服</option><option>其他（请在留言注明）</option></select></div>
+          <div class="form-group"><label>意向部门</label><select name="skill" required><option value="">请选择你想加入的部门</option><option>战斗部门</option><option>建筑部门</option><option>资源部门</option><option>生电部门</option><option>还不确定</option></select></div>
+          <div class="form-group"><label>入会留言（选填）</label><textarea name="msg" rows="3" placeholder="想对工会说的话"></textarea></div>
+          <button type="submit" class="btn">提交申请</button>
+        </form>
+      </div>
+    </section>
 
-  <!-- 页脚 -->
-  <footer>
-    <p>© 2026 潮汐聚澜工会 | 汇聚潮汐之力，共建温馨工会</p>
-    <p class="admin-link"><a href="admin.html">管理后台</a></p>
-  </footer>
+    <!-- 页脚 -->
+    <footer>
+      <p>© 2026 潮汐聚澜工会 | 汇聚潮汐之力，共建温馨工会</p>
+      <p class="admin-link"><a href="admin/">管理后台</a></p>
+    </footer>
+  </div>
 
   <button id="toTop" title="返回顶部">↑</button>
 
   <!-- 公共配置与数据层 -->
   <script src="config.js"></script>
   <script>
-    /* ===================== 1. 汉堡菜单（手机端） ===================== */
+    /* ===================== 1. 侧边栏抽屉（手机端） ===================== */
+    const sidebar = document.getElementById('sidebar');
+    const mask = document.getElementById('mask');
     const menuBtn = document.getElementById('menuBtn');
-    const navLinks = document.getElementById('navLinks');
-    menuBtn.addEventListener('click', () => navLinks.classList.toggle('open'));
-    navLinks.querySelectorAll(':scope > li > a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+    /* 统一开/关：侧栏滑入 + 遮罩显示 + 锁定背景滚动 */
+    function toggleMenu(open) {
+      sidebar.classList.toggle('open', open);
+      mask.classList.toggle('show', open);
+      document.body.classList.toggle('no-scroll', open);
+    }
+    menuBtn.addEventListener('click', () => toggleMenu(true));
+    mask.addEventListener('click', () => toggleMenu(false));          /* 点遮罩关闭 */
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleMenu(false); });  /* Esc 关闭 */
+    document.querySelectorAll('#navLinks a').forEach(a => a.addEventListener('click', () => toggleMenu(false)));  /* 点菜单项后自动收起 */
 
-    /* ===================== 2. 入会表单：前端校验 + 提交到数据库 ===================== */
+    /* ===================== 2. 滚动监听：返回顶部按钮 + 当前版块高亮 ===================== */
+    const toTop = document.getElementById('toTop');
+    const secEls = ['home', 'about', 'service', 'join'].map(id => document.getElementById(id));
+    const navAs = document.querySelectorAll('#navLinks a[href^="#"]');
+    window.addEventListener('scroll', () => {
+      toTop.style.display = window.scrollY > 400 ? 'block' : 'none';
+      /* 滚动到哪个版块，侧栏对应菜单项就高亮 */
+      let cur = 'home';
+      secEls.forEach(s => { if (window.scrollY >= s.offsetTop - 140) cur = s.id; });
+      navAs.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
+    }, { passive: true });
+    toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    /* ===================== 3. 入会表单：前端校验 + 提交到数据库 ===================== */
     document.getElementById('joinForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       const ign = this.ign.value.trim(), email = this.email.value.trim(), server = this.server.value, skill = this.skill.value.trim();
@@ -195,10 +252,7 @@
       } catch (err) { alert('提交失败，请检查网络后重试：' + err.message); }
     });
 
-    /* ===================== 3. 通用：返回顶部 + 滚动动画 ===================== */
-    const toTop = document.getElementById('toTop');
-    window.addEventListener('scroll', () => { toTop.style.display = window.scrollY > 400 ? 'block' : 'none'; });
-    toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    /* ===================== 4. 滚动进入动画 ===================== */
     const observer = new IntersectionObserver(entries => { entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('show'); observer.unobserve(en.target); } }); }, { threshold: 0.15 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   </script>
