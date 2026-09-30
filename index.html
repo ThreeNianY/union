@@ -171,14 +171,16 @@
     .faq-item[open] summary::after { transform: rotate(45deg); background: var(--blue); color: #fff; }
     .faq-item .faq-a { padding: 0 22px 18px; color: var(--gray); font-size: 14px; line-height: 1.85; }
 
-    /* 友情链接 */
-    .friend-links { max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 12px; }
-    .friend-link { display: flex; align-items: center; gap: 16px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 18px 22px; transition: transform .2s, box-shadow .2s; }
-    .friend-link:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(12, 123, 179, .18); }
-    .friend-link .ico { flex: none; width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, #5b9e3e, #3f7a28); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; }
+    /* 友情链接：卡片式布局，带图标 + 名称 + 描述 + 跳转箭头 */
+    .friend-links { max-width: 860px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+    .friend-link { display: flex; align-items: center; gap: 14px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 18px 20px; transition: transform .22s, box-shadow .22s; border-left: 4px solid transparent; }
+    .friend-link:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(12, 123, 179, .2); border-left-color: var(--cyan); }
+    .friend-link .ico { flex: none; width: 46px; height: 46px; border-radius: 12px; background: linear-gradient(135deg, var(--blue), var(--cyan)); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; flex-shrink: 0; }
     .friend-link h3 { font-size: 16px; margin-bottom: 2px; }
-    .friend-link p { font-size: 13px; color: var(--gray); }
-    .friend-link .go { flex: none; margin-left: auto; color: var(--blue); font-size: 13px; white-space: nowrap; }
+    .friend-link p { font-size: 13px; color: var(--gray); line-height: 1.5; }
+    .friend-link .go { flex: none; margin-left: auto; color: var(--blue); font-size: 13px; white-space: nowrap; opacity: .6; transition: opacity .2s, transform .2s; }
+    .friend-link:hover .go { opacity: 1; transform: translateX(3px); }
+    .friend-link-empty { text-align: center; color: var(--gray); padding: 24px; grid-column: 1/-1; }
 
     @media (max-width: 900px) {
       .cards { grid-template-columns: 1fr 1fr; }
@@ -351,16 +353,7 @@
       <div class="container">
         <h2 class="sec-title reveal">友情<span>链接</span></h2>
         <p class="sec-sub reveal">好用的站点推荐</p>
-        <div class="friend-links reveal">
-          <a class="friend-link" href="https://zh.minecraft.wiki/" target="_blank" rel="noopener">
-            <span class="ico">W</span>
-            <div>
-              <h3>Minecraft Wiki 中文站</h3>
-              <p>最权威的 Minecraft 百科：合成表、方块资料、机制详解，查资料首选</p>
-            </div>
-            <span class="go">前往访问 →</span>
-          </a>
-        </div>
+        <div class="friend-links reveal" id="friendLinksBox"><div class="cx-loading"><span class="cx-spinner"></span><span>加载中...</span></div></div>
       </div>
     </section>
 
@@ -476,6 +469,24 @@
         });
       } catch (_) { /* 加载失败保持显示"—"，不影响页面其他功能 */ }
     })();
+
+    /* ===================== 2.6 友情链接：从云端动态加载 ===================== */
+    async function renderFriendLinks() {
+      try {
+        const links = await DB.getLinks();
+        const box = document.getElementById('friendLinksBox');
+        if (!links.length) { box.innerHTML = '<p class="friend-link-empty">暂无友情链接，管理员可在后台添加。</p>'; return; }
+        box.innerHTML = links.map(l => {
+          const first = (l.name || '?').charAt(0);
+          return `<a class="friend-link" href="${esc(l.url)}" target="_blank" rel="noopener">
+            <span class="ico">${esc(first)}</span>
+            <div style="min-width:0;"><h3>${esc(l.name)}</h3><p>${esc(l.desc || '')}</p></div>
+            <span class="go">前往访问 →</span>
+          </a>`;
+        }).join('');
+      } catch (e) { showRetry(document.getElementById('friendLinksBox'), renderFriendLinks); }
+    }
+    renderFriendLinks();
 
     /* ===================== 3. 入会表单：草稿暂存 + 前端校验 + 提交反馈 ===================== */
     const joinForm = document.getElementById('joinForm');
