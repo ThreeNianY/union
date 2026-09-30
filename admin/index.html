@@ -53,6 +53,8 @@
     th { background: var(--bg-soft); white-space: nowrap; }
     .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 13px; }
     .ok-btn { color: var(--green); background: none; border: none; cursor: pointer; font-size: 13px; font-weight: bold; }
+    .copy-btn { color: var(--blue); background: #fff; border: 1px solid var(--blue); border-radius: 6px; padding: 2px 9px; cursor: pointer; font-size: 12px; margin-left: 2px; }
+    .copy-btn:hover { background: var(--blue); color: #fff; }
     .del-btn:hover { text-decoration: underline; }
     .empty-tip { color: var(--gray); text-align: center; padding: 24px 0; }
     .btn { display: inline-block; padding: 9px 22px; border-radius: 30px; background: var(--blue); color: #fff; border: none; cursor: pointer; font-family: inherit; font-size: 14px; }
@@ -158,7 +160,7 @@
       <!-- Tab 1：入会申请 -->
       <div class="tab-pane active" id="tab-apps">
         <div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button class="btn-ghost" id="clearApps">清空全部</button></div>
-        <div style="overflow-x:auto;"><table><thead><tr><th>提交时间</th><th>游戏ID</th><th>服务器</th><th>意向部门</th><th>留言</th><th>邮箱</th><th>状态</th><th>操作</th></tr></thead><tbody id="adminBody"></tbody></table></div>
+        <div style="overflow-x:auto;"><table><thead><tr><th>提交时间</th><th>QQ昵称及游戏ID</th><th>QQ号</th><th>上线时间</th><th>擅长</th><th>其他回答</th><th>状态</th><th>操作</th></tr></thead><tbody id="adminBody"></tbody></table></div>
         <p class="empty-tip" id="emptyTip">暂无申请记录</p>
       </div>
 
@@ -320,36 +322,40 @@
         emptyTip.textContent = '暂无申请记录';
         adminBody.innerHTML = apps.map(a => {
           const statusCell = a.status === 'approved' ? '<span style="color:var(--green);font-weight:bold;">已同意</span>' : '待审核';
-          const okBtn = a.status === 'approved' ? '—' : `<button class="ok-btn" data-ok="${a.id}" data-email="${esc(a.email || '')}" data-ign="${esc(a.ign)}">同意</button>`;
-          return `<tr><td>${esc(a.time)}</td><td>${esc(a.ign)}</td><td>${esc(a.server)}</td><td>${esc(a.skill)}</td><td>${esc(a.msg || '—')}</td><td>${esc(a.email || '—')}</td><td>${statusCell}</td><td>${okBtn} <button class="del-btn" data-id="${a.id}">删除</button></td></tr>`;
+          const qq = a.email || '';   /* QQ号复用 email 列存储 */
+          const qqCell = qq ? `${esc(qq)} <button class="copy-btn" data-qq="${esc(qq)}" title="复制QQ号">复制</button>` : '—';
+          const okBtn = a.status === 'approved' ? '—' : `<button class="ok-btn" data-ok="${a.id}" data-qq="${esc(qq)}" data-ign="${esc(a.ign)}">同意</button>`;
+          return `<tr><td>${esc(a.time)}</td><td>${esc(a.ign)}</td><td>${qqCell}</td><td>${esc(a.server)}</td><td>${esc(a.skill || '—')}</td><td style="white-space:pre-line;min-width:180px;">${esc(a.msg || '—')}</td><td>${statusCell}</td><td>${okBtn} <button class="del-btn" data-id="${a.id}">删除</button></td></tr>`;
         }).join('');
       } catch (e) { adminBody.innerHTML = ''; emptyTip.textContent = '加载失败'; emptyTip.style.display = 'block'; }
     }
     adminBody.addEventListener('click', async e => {
       if (e.target.classList.contains('del-btn')) { await DB.delApp(e.target.dataset.id); await renderAdminApps(); return; }
-      if (e.target.classList.contains('ok-btn')) { await approveApp(e.target.dataset.ok, e.target.dataset.email, e.target.dataset.ign); }
+      if (e.target.classList.contains('copy-btn')) { copyText(e.target.dataset.qq, 'QQ号已复制：'); return; }
+      if (e.target.classList.contains('ok-btn')) { await approveApp(e.target.dataset.ok, e.target.dataset.qq, e.target.dataset.ign); }
     });
 
-    /* 同意申请：通过 EmailJS 发邮件给申请者，并把状态改为已同意 */
-    async function approveApp(id, email, ign) {
-      if (!EMAILJS_READY) { alert('尚未配置邮件服务！请先在 config.js 中填写 EmailJS 三个配置项。'); return; }
-      if (!email) { alert('该申请没有填写邮箱，无法发送邮件'); return; }
-      if (!confirm(`确定同意「${ign}」的入会申请吗？\n确认后将发送同意邮件到：${email}`)) return;
+    /* 复制文本到剪贴板（带旧浏览器兜底） */
+    function copyText(text, okTip) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => alert(okTip + text), () => alert('复制失败，请手动选择文字复制'));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); alert(okTip + text); } catch (_) { alert('复制失败，请手动选择文字复制'); }
+        document.body.removeChild(ta);
+      }
+    }
+
+    /* 同意申请：仅更新状态（不再发邮件，请用复制的 QQ 号私下联系申请者） */
+    async function approveApp(id, qq, ign) {
+      if (!confirm(`确定同意「${ign}」的入会申请吗？\n申请者 QQ：${qq || '未填写'}\n确认后请手动加 QQ 通知对方。`)) return;
       try {
-        const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            service_id: EMAILJS_SERVICE_ID,
-            template_id: EMAILJS_TEMPLATE_ID,
-            user_id: EMAILJS_PUBLIC_KEY,
-            template_params: { to_email: email, ign: ign }
-          })
-        });
-        if (!res.ok) throw new Error(await res.text());
         await DB.updateAppStatus(id, 'approved');
-        alert(`同意邮件已发送到 ${email}`);
+        alert(`已标记为「已同意」，请尽快加 QQ「${qq}」通知 ${ign}`);
         await renderAdminApps();
-      } catch (err) { alert('发送失败：' + err.message); }
+      } catch (err) { alert('操作失败：' + err.message); }
     }
     document.getElementById('clearApps').addEventListener('click', async () => {
       if (confirm('确定要清空所有申请记录吗？')) { await DB.clearApps(); await renderAdminApps(); }

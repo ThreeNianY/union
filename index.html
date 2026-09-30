@@ -88,6 +88,13 @@
     .form-group label { display: block; font-size: 14px; margin-bottom: 5px; }
     .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #cfe0ea; border-radius: 8px; font-family: inherit; font-size: 14px; background: #fff; }
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--blue); }
+    /* 单选 / 多选选项组 */
+    .choice-group { display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
+    .choice-group label { display: flex; align-items: center; gap: 9px; font-size: 14px; cursor: pointer; }
+    .choice-group input { width: 17px; height: 17px; padding: 0; border: none; accent-color: var(--blue); cursor: pointer; flex: none; }
+    .q-title { font-size: 14px; margin-bottom: 8px; font-weight: bold; }
+    .q-title .q-no { color: var(--blue); margin-right: 4px; }
+    .q-title .opt { font-weight: normal; color: var(--gray); font-size: 12px; margin-left: 6px; }
 
     /* 页脚 */
     footer { background: #142a36; color: #9fb3bf; text-align: center; padding: 28px 20px; font-size: 14px; }
@@ -202,11 +209,46 @@
         <h2 class="sec-title">入会<span>申请</span></h2>
         <p class="sec-sub">填写信息加入工会，开启你的方块冒险</p>
         <form id="joinForm">
-          <div class="form-group"><label>游戏 ID（IGN）</label><input type="text" name="ign" placeholder="请输入你的 Minecraft 游戏名" required /></div>
-          <div class="form-group"><label>邮箱（用于接收审核结果）</label><input type="email" name="email" placeholder="例如：123456789@qq.com" required /></div>
-          <div class="form-group"><label>所在服务器</label><select name="server" required><option value="">请选择你常驻的服务器</option><option>网易服（手游/端游）</option><option>JAVA服</option><option>其他（请在留言注明）</option></select></div>
-          <div class="form-group"><label>意向部门</label><select name="skill" required><option value="">请选择你想加入的部门</option><option>战斗部门</option><option>建筑部门</option><option>资源部门</option><option>生电部门</option><option>还不确定</option></select></div>
-          <div class="form-group"><label>入会留言（选填）</label><textarea name="msg" rows="3" placeholder="想对工会说的话"></textarea></div>
+          <div class="form-group">
+            <p class="q-title"><span class="q-no">1.</span>你的 QQ 昵称及游戏内 ID 是？</p>
+            <input type="text" name="ign" placeholder="请输入 QQ 昵称和 Minecraft 游戏名" required />
+          </div>
+          <div class="form-group">
+            <p class="q-title"><span class="q-no">2.</span>你的 QQ 号<span class="opt">（审核通过后凭此联系你，必填）</span></p>
+            <input type="text" name="qq" inputmode="numeric" pattern="[1-9][0-9]{4,11}" title="请输入 5~12 位 QQ 号" placeholder="请输入你的 QQ 号（纯数字）" required />
+          </div>
+          <div class="form-group">
+            <p class="q-title"><span class="q-no">3.</span>你的大概上线时间</p>
+            <div class="choice-group">
+              <label><input type="radio" name="online" value="仅周末" required />仅周末</label>
+              <label><input type="radio" name="online" value="每天1到两小时" />每天 1 到两小时</label>
+              <label><input type="radio" name="online" value="全天" />全天</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <p class="q-title"><span class="q-no">4.</span>在游戏中，你最擅长什么？<span class="opt">（多选题，可多选）</span></p>
+            <div class="choice-group">
+              <label><input type="checkbox" name="sk" value="建筑" />建筑</label>
+              <label><input type="checkbox" name="sk" value="生电" />生电</label>
+              <label><input type="checkbox" name="sk" value="PVP" />PVP</label>
+              <label><input type="checkbox" name="sk" value="休闲" />休闲</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <p class="q-title"><span class="q-no">5.</span>如果工会成员之间发生误会或矛盾，你会怎样处理？</p>
+            <textarea name="conflict" rows="3" placeholder="请说说你的处理方式" required></textarea>
+          </div>
+          <div class="form-group">
+            <p class="q-title"><span class="q-no">6.</span>你是否接受工会内绝对公平公正的原则，并承诺不做出损害工会利益及破坏他人游戏体验的行为？</p>
+            <div class="choice-group">
+              <label><input type="radio" name="promise" value="是" required />是</label>
+              <label><input type="radio" name="promise" value="否" />否</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <p class="q-title"><span class="q-no">7.</span>还有什么想对工会管理说的话，或者想了解的工会问题吗？<span class="opt">（选填）</span></p>
+            <textarea name="msg" rows="3" placeholder="想对工会说的话"></textarea>
+          </div>
           <button type="submit" class="btn">提交申请</button>
         </form>
       </div>
@@ -255,14 +297,25 @@
     /* ===================== 3. 入会表单：前端校验 + 提交到数据库 ===================== */
     document.getElementById('joinForm').addEventListener('submit', async function (e) {
       e.preventDefault();
-      const ign = this.ign.value.trim(), email = this.email.value.trim(), server = this.server.value, skill = this.skill.value.trim();
-      if (!ign) { alert('请填写游戏 ID（IGN）'); return; }
-      if (!/^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$/.test(email)) { alert('请填写正确的邮箱地址'); return; }
-      if (!server) { alert('请选择所在服务器'); return; }
-      if (!skill) { alert('请选择意向部门'); return; }
+      const ign = this.ign.value.trim();
+      const qq = this.qq.value.trim();
+      const online = (this.online.value || '').trim();
+      const skills = Array.from(this.sk).filter(c => c.checked).map(c => c.value);
+      const conflict = this.conflict.value.trim();
+      const promise = (this.promise.value || '').trim();
+      const msg = this.msg.value.trim();
+      if (!ign) { alert('请填写 QQ 昵称及游戏内 ID'); return; }
+      if (!/^[1-9][0-9]{4,11}$/.test(qq)) { alert('请填写正确的 QQ 号（5~12 位纯数字）'); return; }
+      if (!online) { alert('请选择大概上线时间'); return; }
+      if (skills.length === 0) { alert('请至少选择一项你擅长的内容'); return; }
+      if (!conflict) { alert('请填写第 5 题：发生矛盾时你会怎样处理'); return; }
+      if (!promise) { alert('请选择第 6 题：是否接受公平公正原则'); return; }
+      if (promise === '否') { alert('你选择了不接受工会公平公正原则，暂无法提交入会申请'); return; }
+      /* 其余回答合并存入留言字段（后台"其他回答"列展示） */
+      const detail = '【矛盾处理】' + conflict + '\n【公平承诺】' + promise + (msg ? '\n【留言】' + msg : '');
       try {
-        await DB.addApp({ ign, email, server, skill, msg: this.msg.value.trim(), time: new Date().toLocaleString('zh-CN'), status: 'pending' });
-        alert('申请提交成功！工会人事部将在 3 日内审核，审核通过后邀请你加入 QQ 群。');
+        await DB.addApp({ ign, email: qq, server: online, skill: skills.join('、'), msg: detail, time: new Date().toLocaleString('zh-CN'), status: 'pending' });
+        alert('申请提交成功！工会管理将尽快审核，审核通过后会通过 QQ 联系你。');
         this.reset();
       } catch (err) { alert('提交失败，请检查网络后重试：' + err.message); }
     });
