@@ -134,6 +134,43 @@ const DB = {
     links.splice(id, 1); localStorage.setItem('fr_links', JSON.stringify(links));
   },
 
+  /* --- 友情链接（主页展示，与成员导航完全独立） --- */
+  async getFriendLinks() {
+    if (USE_CLOUD) {
+      const res = await apiFetch('friend_links?select=id,name,url,desc&order=id.asc');
+      return await res.json();
+    }
+    return JSON.parse(localStorage.getItem('fr_friend_links') || '[]').map((l, i) => ({ ...l, id: i }));
+  },
+  async addFriendLink(data) {
+    if (USE_CLOUD) {
+      await apiFetch('friend_links', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }); return;
+    }
+    const links = JSON.parse(localStorage.getItem('fr_friend_links') || '[]');
+    links.push(data); localStorage.setItem('fr_friend_links', JSON.stringify(links));
+  },
+  async updateFriendLink(id, field, value) {
+    if (USE_CLOUD) {
+      await apiFetch(`friend_links?id=eq.${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value })
+      }); return;
+    }
+    const links = JSON.parse(localStorage.getItem('fr_friend_links') || '[]');
+    links[id] = { ...links[id], [field]: value };
+    localStorage.setItem('fr_friend_links', JSON.stringify(links));
+  },
+  async delFriendLink(id) {
+    if (USE_CLOUD) {
+      await apiFetch(`friend_links?id=eq.${id}`, { method: 'DELETE' }); return;
+    }
+    const links = JSON.parse(localStorage.getItem('fr_friend_links') || '[]');
+    links.splice(id, 1); localStorage.setItem('fr_friend_links', JSON.stringify(links));
+  },
+
   /* --- 工会规则（单行，id=1） --- */
   async getRules() {
     if (USE_CLOUD) {

@@ -160,6 +160,7 @@
         <button data-tab="notice">成员公告</button>
         <button data-tab="info">规则与服务器</button>
         <button data-tab="links">网页导航</button>
+        <button data-tab="friendlinks">友情链接</button>
         <button data-tab="roster">成员名录</button>
         <button data-tab="suggest">提议箱</button>
         <button data-tab="pwd">密码管理</button>
@@ -243,7 +244,20 @@
         <p class="empty-tip" id="sugEmptyTip">暂无建议</p>
       </div>
 
-      <!-- Tab 7：密码管理 -->
+      <!-- Tab 7：友情链接（主页展示，与网页导航独立） -->
+      <div class="tab-pane" id="tab-friendlinks">
+        <p class="empty-tip" style="text-align:left;padding:0 0 14px;">添加新链接（名称 / 网址 / 描述）</p>
+        <div class="link-add-bar">
+          <input type="text" id="newFriendLinkName" placeholder="链接名称" />
+          <input type="text" id="newFriendLinkUrl" placeholder="https://..." />
+          <input type="text" id="newFriendLinkDesc" placeholder="简短描述" />
+          <button class="btn" id="addFriendLink">添加</button>
+        </div>
+        <div id="friendLinkList"></div>
+        <p class="empty-tip" id="friendLinkEmptyTip">暂无友情链接</p>
+      </div>
+
+      <!-- Tab 8：密码管理 -->
       <div class="tab-pane" id="tab-pwd">
         <p class="empty-tip" style="text-align:left;padding:0 0 14px;">修改两个访问密码（都保存在云端）</p>
         <div style="max-width:400px;margin:0 auto;">
@@ -467,6 +481,36 @@
       await DB.updateLink(e.target.dataset.id, e.target.dataset.field, e.target.value.trim());
     });
 
+    /* ===================== Tab 3.5：友情链接（主页展示，与网页导航独立） ===================== */
+    const friendLinkList = document.getElementById('friendLinkList');
+    const friendLinkEmptyTip = document.getElementById('friendLinkEmptyTip');
+    async function renderFriendLinks() {
+      try {
+        const links = await DB.getFriendLinks();
+        friendLinkEmptyTip.style.display = links.length ? 'none' : 'block';
+        friendLinkEmptyTip.textContent = '暂无友情链接';
+        friendLinkList.innerHTML = links.map(l => `<div class="link-row"><input type="text" value="${esc(l.name)}" data-field="name" data-id="${l.id}" /><input type="text" value="${esc(l.url)}" data-field="url" data-id="${l.id}" /><input type="text" value="${esc(l.desc || '')}" data-field="desc" data-id="${l.id}" /><button class="del-btn" data-del="${l.id}">删除</button></div>`).join('');
+      } catch (e) { friendLinkList.innerHTML = ''; friendLinkEmptyTip.textContent = '加载失败'; friendLinkEmptyTip.style.display = 'block'; }
+    }
+    document.getElementById('addFriendLink').addEventListener('click', async () => {
+      const name = document.getElementById('newFriendLinkName').value.trim();
+      const url = document.getElementById('newFriendLinkUrl').value.trim();
+      const desc = document.getElementById('newFriendLinkDesc').value.trim();
+      if (!name || !url) { alert('请填写链接名称和网址'); return; }
+      try {
+        await DB.addFriendLink({ name, url, desc });
+        await renderFriendLinks();
+        document.getElementById('newFriendLinkName').value = ''; document.getElementById('newFriendLinkUrl').value = ''; document.getElementById('newFriendLinkDesc').value = '';
+      } catch (e) { alert('添加失败：' + e.message); }
+    });
+    friendLinkList.addEventListener('click', async e => {
+      if (e.target.dataset.del !== undefined) { await DB.delFriendLink(e.target.dataset.del); await renderFriendLinks(); }
+    });
+    friendLinkList.addEventListener('change', async e => {
+      if (!e.target.dataset.field) return;
+      await DB.updateFriendLink(e.target.dataset.id, e.target.dataset.field, e.target.value.trim());
+    });
+
     /* ===================== Tab 4：密码管理 ===================== */
     async function loadPwdEdit() {
       try {
@@ -649,7 +693,7 @@
     /* ===================== 登录后刷新所有数据 ===================== */
     async function refreshAll() {
       await renderAdminApps(); await loadNoticeEdit(); await loadInfoEdit();
-      await renderAdminLinks(); await renderAdminMembers(); await renderSuggestions(); await loadPwdEdit();
+      await renderAdminLinks(); await renderFriendLinks(); await renderAdminMembers(); await renderSuggestions(); await loadPwdEdit();
     }
   </script>
 </body>

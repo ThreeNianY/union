@@ -473,7 +473,7 @@
     /* ===================== 2.6 友情链接：从云端动态加载 ===================== */
     async function renderFriendLinks() {
       try {
-        const links = await DB.getLinks();
+        const links = await DB.getFriendLinks();
         const box = document.getElementById('friendLinksBox');
         if (!links.length) { box.innerHTML = '<p class="friend-link-empty">暂无友情链接，管理员可在后台添加。</p>'; return; }
         box.innerHTML = links.map(l => {
