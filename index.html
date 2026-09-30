@@ -218,7 +218,16 @@
             <input type="text" name="qq" inputmode="numeric" pattern="[1-9][0-9]{4,11}" title="请输入 5~12 位 QQ 号" placeholder="请输入你的 QQ 号（纯数字）" required />
           </div>
           <div class="form-group">
-            <p class="q-title"><span class="q-no">3.</span>你的大概上线时间</p>
+            <p class="q-title"><span class="q-no">3.</span>你玩的是哪个版本？</p>
+            <div class="choice-group">
+              <label><input type="radio" name="srv" value="网易服" required />网易服</label>
+              <label><input type="radio" name="srv" value="JAVA服" />JAVA 服</label>
+              <label><input type="radio" name="srv" value="双服都玩" />双服都玩</label>
+              <label><input type="radio" name="srv" value="其他" />其他</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <p class="q-title"><span class="q-no">4.</span>你的大概上线时间</p>
             <div class="choice-group">
               <label><input type="radio" name="online" value="仅周末" required />仅周末</label>
               <label><input type="radio" name="online" value="每天1到两小时" />每天 1 到两小时</label>
@@ -226,7 +235,7 @@
             </div>
           </div>
           <div class="form-group">
-            <p class="q-title"><span class="q-no">4.</span>在游戏中，你最擅长什么？<span class="opt">（单选）</span></p>
+            <p class="q-title"><span class="q-no">5.</span>在游戏中，你最擅长什么？<span class="opt">（单选）</span></p>
             <div class="choice-group">
               <label><input type="radio" name="sk" value="建筑" required />建筑</label>
               <label><input type="radio" name="sk" value="生电" />生电</label>
@@ -235,18 +244,18 @@
             </div>
           </div>
           <div class="form-group">
-            <p class="q-title"><span class="q-no">5.</span>如果工会成员之间发生误会或矛盾，你会怎样处理？</p>
+            <p class="q-title"><span class="q-no">6.</span>如果工会成员之间发生误会或矛盾，你会怎样处理？</p>
             <textarea name="conflict" rows="3" placeholder="请说说你的处理方式" required></textarea>
           </div>
           <div class="form-group">
-            <p class="q-title"><span class="q-no">6.</span>你是否接受工会内绝对公平公正的原则，并承诺不做出损害工会利益及破坏他人游戏体验的行为？</p>
+            <p class="q-title"><span class="q-no">7.</span>你是否接受工会内绝对公平公正的原则，并承诺不做出损害工会利益及破坏他人游戏体验的行为？</p>
             <div class="choice-group">
               <label><input type="radio" name="promise" value="是" required />是</label>
               <label><input type="radio" name="promise" value="否" />否</label>
             </div>
           </div>
           <div class="form-group">
-            <p class="q-title"><span class="q-no">7.</span>还有什么想对工会管理说的话，或者想了解的工会问题吗？<span class="opt">（选填）</span></p>
+            <p class="q-title"><span class="q-no">8.</span>还有什么想对工会管理说的话，或者想了解的工会问题吗？<span class="opt">（选填）</span></p>
             <textarea name="msg" rows="3" placeholder="想对工会说的话"></textarea>
           </div>
           <button type="submit" class="btn">提交申请</button>
@@ -299,6 +308,7 @@
       e.preventDefault();
       const ign = this.ign.value.trim();
       const qq = this.qq.value.trim();
+      const srv = (this.srv.value || '').trim();
       const online = (this.online.value || '').trim();
       const skill = (this.sk.value || '').trim();
       const conflict = this.conflict.value.trim();
@@ -306,13 +316,14 @@
       const msg = this.msg.value.trim();
       if (!ign) { alert('请填写 QQ 昵称'); return; }
       if (!/^[1-9][0-9]{4,11}$/.test(qq)) { alert('请填写正确的 QQ 号（5~12 位纯数字）'); return; }
+      if (!srv) { alert('请选择你玩的版本（网易服/JAVA服）'); return; }
       if (!online) { alert('请选择大概上线时间'); return; }
       if (!skill) { alert('请选择一项你最擅长的内容'); return; }
-      if (!conflict) { alert('请填写第 5 题：发生矛盾时你会怎样处理'); return; }
-      if (!promise) { alert('请选择第 6 题：是否接受公平公正原则'); return; }
+      if (!conflict) { alert('请填写第 6 题：发生矛盾时你会怎样处理'); return; }
+      if (!promise) { alert('请选择第 7 题：是否接受公平公正原则'); return; }
       if (promise === '否') { alert('你选择了不接受工会公平公正原则，暂无法提交入会申请'); return; }
-      /* 其余回答合并存入留言字段（后台"其他回答"列展示） */
-      const detail = '【矛盾处理】' + conflict + '\n【公平承诺】' + promise + (msg ? '\n【留言】' + msg : '');
+      /* 其余回答合并存入留言字段（后台"其他回答"列展示；同意时自动解析服务器） */
+      const detail = '【服务器】' + srv + '\n【矛盾处理】' + conflict + '\n【公平承诺】' + promise + (msg ? '\n【留言】' + msg : '');
       try {
         await DB.addApp({ ign, email: qq, server: online, skill, msg: detail, time: new Date().toLocaleString('zh-CN'), status: 'pending' });
         alert('申请提交成功！工会管理将尽快审核，审核通过后会通过 QQ 联系你。');
