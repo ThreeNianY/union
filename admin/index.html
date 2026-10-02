@@ -180,6 +180,7 @@
       <button data-tab="roster">成员名录</button>
       <button data-tab="suggest">提议箱</button>
       <button data-tab="stats">访问统计</button>
+      <button data-tab="bot">机器人状态</button>
       <button data-tab="pwd">密码管理</button>
     </div>
     <div class="side-foot">
@@ -311,6 +312,21 @@
         <div id="summaryList"></div>
       </div>
 
+      <!-- Tab 9.5：机器人状态 -->
+      <div class="tab-pane" id="tab-bot">
+        <div style="max-width:480px;margin:10px auto;padding:26px;border-radius:12px;background:var(--bg-soft);text-align:center;">
+          <div>
+            <span id="botDot" style="width:14px;height:14px;border-radius:50%;background:#999;display:inline-block;vertical-align:-1px;margin-right:8px;"></span>
+            <span id="botStateText" style="font-size:18px;font-weight:bold;">检测中...</span>
+          </div>
+          <p id="botBeatTime" style="color:var(--gray);font-size:13px;margin-top:10px;"></p>
+          <button class="btn-ghost" id="botRefreshBtn" style="margin-top:6px;">刷新状态</button>
+          <p style="color:var(--gray);font-size:13px;margin-top:16px;line-height:1.8;text-align:left;">
+            原理：机器人运行时每 30 秒向云端报告一次「心跳」。超过 3 分钟没有心跳，说明机器人电脑关机、脚本没运行或 NapCat 掉线，此时自动审批和审核群播报都会暂停。
+          </p>
+        </div>
+      </div>
+
       <!-- Tab 9：密码管理 -->
       <div class="tab-pane" id="tab-pwd">
         <p class="empty-tip" style="text-align:left;padding:0 0 14px;">修改两个访问密码（都保存在云端）</p>
@@ -429,7 +445,46 @@
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + e.target.dataset.tab));
       document.getElementById('adminTitle').textContent = e.target.textContent;   /* 面板标题跟随当前功能 */
       setMenu(false);   /* 手机端点完菜单自动收起抽屉 */
+      if (e.target.dataset.tab === 'bot') renderBotStatus();
     });
+
+    /* ===================== Tab 9.5：机器人状态（心跳检测） ===================== */
+    async function renderBotStatus() {
+      const dot = document.getElementById('botDot');
+      const textEl = document.getElementById('botStateText');
+      const timeEl = document.getElementById('botBeatTime');
+      try {
+        const s = await DB.getSettings();
+        const beat = s['bot_heartbeat'];
+        if (!beat) {
+          dot.style.background = '#999';
+          textEl.style.color = 'var(--gray)';
+          textEl.textContent = '从未连接';
+          timeEl.textContent = '机器人还没有上报过心跳，请确认脚本已启动';
+          return;
+        }
+        const diff = Date.now() - new Date(beat).getTime();
+        const online = diff < 3 * 60 * 1000;
+        dot.style.background = online ? '#2ecc71' : '#c0392b';
+        textEl.style.color = online ? '#27ae60' : '#c0392b';
+        textEl.textContent = online ? '机器人在线' : '机器人离线';
+        timeEl.textContent = '最后心跳：' + new Date(beat).toLocaleString('zh-CN')
+          + (online ? '' : `（约 ${Math.max(1, Math.floor(diff / 60000))} 分钟前）`);
+      } catch (e) {
+        dot.style.background = '#999';
+        textEl.style.color = 'var(--gray)';
+        textEl.textContent = '状态读取失败';
+        timeEl.textContent = '';
+      }
+    }
+    document.getElementById('botRefreshBtn').addEventListener('click', renderBotStatus);
+    /* 停留在机器人状态页时，每 30 秒自动刷新一次 */
+    setInterval(() => {
+      if (!document.body.classList.contains('locked')
+          && document.getElementById('tab-bot').classList.contains('active')) {
+        renderBotStatus();
+      }
+    }, 30000);
 
     /* ===================== Tab 1：申请列表 ===================== */
     const adminBody = document.getElementById('adminBody');
