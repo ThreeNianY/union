@@ -103,7 +103,7 @@
     /* 图片放大灯箱：点击轮播图全屏查看 */
     .lightbox { position: fixed; inset: 0; z-index: 500; background: rgba(6, 24, 36, .9); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; cursor: zoom-out; }
     .lightbox.show { opacity: 1; visibility: visible; }
-    .lightbox img { width: 100vw; height: 100vh; object-fit: contain; display: block; }
+    .lightbox img { width: 100vw; height: 100vh; object-fit: cover; display: block; }
     .lb-close { position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border: none; border-radius: 50%; background: rgba(255, 255, 255, .16); color: #fff; font-size: 26px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; }
     .lb-close:hover { background: rgba(255, 255, 255, .3); }
     .lb-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border: none; border-radius: 50%; background: rgba(255, 255, 255, .16); color: #fff; font-size: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; }
