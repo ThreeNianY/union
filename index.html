@@ -99,6 +99,18 @@
     .car-dots { position: absolute; left: 0; right: 0; bottom: 10px; display: flex; justify-content: center; gap: 7px; z-index: 3; }
     .car-dots button { width: 8px; height: 8px; border-radius: 50%; border: none; background: rgba(255,255,255,.55); cursor: pointer; padding: 0; transition: width .25s, background .25s; }
     .car-dots button.active { width: 22px; border-radius: 5px; background: #fff; }
+    .carousel { cursor: zoom-in; }
+    /* 图片放大灯箱：点击轮播图全屏查看 */
+    .lightbox { position: fixed; inset: 0; z-index: 500; background: rgba(6, 24, 36, .9); display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; cursor: zoom-out; }
+    .lightbox.show { opacity: 1; visibility: visible; }
+    .lightbox img { max-width: 94vw; max-height: 86vh; border-radius: 10px; box-shadow: 0 20px 60px rgba(0, 0, 0, .5); transform: scale(.92); transition: transform .3s; }
+    .lightbox.show img { transform: scale(1); }
+    .lb-close { position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border: none; border-radius: 50%; background: rgba(255, 255, 255, .16); color: #fff; font-size: 26px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+    .lb-close:hover { background: rgba(255, 255, 255, .3); }
+    .lb-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; border: none; border-radius: 50%; background: rgba(255, 255, 255, .16); color: #fff; font-size: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+    .lb-arrow:hover { background: rgba(255, 255, 255, .3); }
+    .lb-arrow.prev { left: 12px; } .lb-arrow.next { right: 12px; }
+    .lb-hint { position: absolute; bottom: 18px; left: 0; right: 0; text-align: center; color: rgba(255, 255, 255, .6); font-size: 13px; pointer-events: none; }
     @keyframes heroUp { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
     /* 底部双层海浪 */
     .hero-waves { position: absolute; left: 0; right: 0; bottom: -1px; z-index: 1; line-height: 0; }
@@ -297,6 +309,14 @@
             <button type="button" class="car-arrow prev" id="carPrev" aria-label="上一张">&#8249;</button>
             <button type="button" class="car-arrow next" id="carNext" aria-label="下一张">&#8250;</button>
             <div class="car-dots" id="carDots"></div>
+          </div>
+          <!-- 图片放大灯箱 -->
+          <div class="lightbox" id="lightbox" role="dialog" aria-label="放大查看图片">
+            <img id="lbImg" src="" alt="" />
+            <button type="button" class="lb-arrow prev" id="lbPrev" aria-label="上一张">&#8249;</button>
+            <button type="button" class="lb-arrow next" id="lbNext" aria-label="下一张">&#8250;</button>
+            <button type="button" class="lb-close" id="lbClose" aria-label="关闭">&times;</button>
+            <p class="lb-hint">点击空白处或按 Esc 关闭</p>
           </div>
         </div>
       </div>
@@ -526,12 +546,37 @@
       document.getElementById('carPrev').addEventListener('click', () => go(idx - 1));
       document.getElementById('carNext').addEventListener('click', () => go(idx + 1));
       /* 手机端手指左右滑动切换 */
-      let startX = null;
-      box.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+      let startX = null, swiped = false;
+      box.addEventListener('touchstart', e => { startX = e.touches[0].clientX; swiped = false; }, { passive: true });
       box.addEventListener('touchend', e => {
         if (startX === null) return;
         const dx = e.changedTouches[0].clientX - startX; startX = null;
-        if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
+        if (Math.abs(dx) > 40) { swiped = true; go(idx + (dx < 0 ? 1 : -1)); }
+      }, { passive: true });
+      /* 点击图片放大查看（灯箱） */
+      const lightbox = document.getElementById('lightbox');
+      const lbImg = document.getElementById('lbImg');
+      let lbIdx = 0;
+      function lbShow(n) {
+        lbIdx = (n + slides.length) % slides.length;
+        lbImg.src = slides[lbIdx].src;
+        lbImg.alt = slides[lbIdx].alt;
+      }
+      function lbOpen() { lbShow(idx); lightbox.classList.add('show'); document.body.classList.add('no-scroll'); }
+      function lbClose() { lightbox.classList.remove('show'); document.body.classList.remove('no-scroll'); }
+      track.addEventListener('click', () => { if (!swiped) lbOpen(); });
+      document.getElementById('lbClose').addEventListener('click', lbClose);
+      document.getElementById('lbPrev').addEventListener('click', e => { e.stopPropagation(); lbShow(lbIdx - 1); });
+      document.getElementById('lbNext').addEventListener('click', e => { e.stopPropagation(); lbShow(lbIdx + 1); });
+      lightbox.addEventListener('click', e => { if (e.target === lightbox) lbClose(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') lbClose(); });
+      /* 灯箱内也支持左右滑动切换 */
+      let lbX = null;
+      lightbox.addEventListener('touchstart', e => { lbX = e.touches[0].clientX; }, { passive: true });
+      lightbox.addEventListener('touchend', e => {
+        if (lbX === null) return;
+        const dx = e.changedTouches[0].clientX - lbX; lbX = null;
+        if (Math.abs(dx) > 40) lbShow(lbIdx + (dx < 0 ? 1 : -1));
       }, { passive: true });
       /* 图片全部解码后初始化（图片很小，轮询等待） */
       (function waitReady() {
