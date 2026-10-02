@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -81,6 +81,14 @@
     .hero-left .btn:hover { background: linear-gradient(135deg, #f3c862, var(--gold)); box-shadow: 0 10px 26px rgba(232, 184, 75, .5); }
     .hero-left .btn.outline { background: rgba(255, 255, 255, .1); color: #fff !important; border: 2px solid rgba(255, 255, 255, .85); margin-left: 14px; box-shadow: none; backdrop-filter: blur(4px); }
     .hero-left .btn.outline:hover { background: rgba(255, 255, 255, .22); box-shadow: none; }
+    /* 首屏 QQ 群按钮 */
+    .hero-left .btn.qq { background: linear-gradient(135deg, #1fb8f5, #0d96d6); color: #fff !important; margin-left: 14px; box-shadow: 0 6px 18px rgba(18, 160, 230, .4); }
+    .hero-left .btn.qq:hover { background: linear-gradient(135deg, #3cc4fa, #12a2e0); }
+    /* 申请表上方的 QQ 咨询群提示条 */
+    .qq-tip { max-width: 640px; margin: 22px auto 0; background: linear-gradient(135deg, #f0f9ff, #e5f5fd); border: 1px dashed #7cc3e8; border-radius: 12px; padding: 14px 18px; text-align: center; font-size: 14px; color: #35586b; }
+    .qq-tip .qq-ico { display: inline-block; background: #12aee8; color: #fff; font-size: 11px; font-weight: bold; padding: 2px 7px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
+    .qq-tip .qq-num { background: none; border: none; color: #0a86c4; font-weight: bold; font-size: 15px; font-family: inherit; cursor: pointer; padding: 0 2px; }
+    .qq-tip .qq-num:hover { text-decoration: underline; }
     .hero-right { flex: 1; max-width: 520px; display: flex; justify-content: center; animation: heroUp .9s .3s ease both; }
     .hero-right img { width: 100%; max-width: 480px; border-radius: 16px; box-shadow: 0 18px 48px rgba(0, 0, 0, .28); border: 3px solid rgba(255, 255, 255, .12); transition: transform .35s, box-shadow .35s; }
     .hero-right img:hover { transform: scale(1.02); box-shadow: 0 22px 56px rgba(0, 0, 0, .34); }
@@ -264,6 +272,7 @@
           <div class="hero-btns">
             <a href="#join" class="btn">申请入会</a>
             <a href="#about" class="btn outline">了解工会</a>
+            <button type="button" class="btn qq" id="heroQQ">加入 QQ 群</button>
           </div>
         </div>
         <div class="hero-right">
@@ -362,6 +371,10 @@
       <div class="container">
         <h2 class="sec-title reveal">入会<span>申请</span></h2>
         <p class="sec-sub reveal">填写信息加入工会，开启你的方块冒险</p>
+        <div class="qq-tip reveal">
+          <span class="qq-ico">QQ</span>有疑问想先了解、或不想等审核？欢迎加入咨询群，群号
+          <button type="button" class="qq-num" id="qqNum">1105877456</button>（点击一键复制）
+        </div>
         <form id="joinForm" class="reveal">
           <div class="form-group">
             <p class="q-title"><span class="q-no">1.</span>你的 QQ 昵称是？</p>
@@ -457,6 +470,19 @@
       navAs.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
     }, { passive: true });
     toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    /* ===================== 2.1 QQ 咨询群：点击一键复制群号 ===================== */
+    const QQ_GROUP = '1105877456';
+    async function copyQQGroup() {
+      try {
+        await navigator.clipboard.writeText(QQ_GROUP);
+        showToast('群号已复制，打开 QQ 搜索群号即可加入', 'success');
+      } catch (_) {
+        window.prompt('请手动复制群号：', QQ_GROUP);  /* 非安全上下文(如http)时兜底 */
+      }
+    }
+    document.getElementById('heroQQ').addEventListener('click', copyQQGroup);
+    document.getElementById('qqNum').addEventListener('click', copyQQGroup);
 
     /* ===================== 2.5 部门卡片：从云端加载各部门实时人数 ===================== */
     (async function loadDeptCounts() {
