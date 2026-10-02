@@ -222,7 +222,11 @@
       #join form { padding: 26px 18px; }
       /* 输入框 16px：防止 iOS Safari 聚焦时自动放大页面 */
       .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
-      .stat b { font-size: 26px; }
+      /* 手机端统计卡：上下单列，每张占满宽度，不再并排拥挤 */
+      .stats { grid-template-columns: 1fr; gap: 12px; max-width: 420px; margin: 0 auto; }
+      .stat { padding: 20px; display: flex; align-items: center; justify-content: center; gap: 14px; }
+      .stat b { font-size: 30px; }
+      .stat span { font-size: 15px; }
       #toTop { right: 16px; bottom: 16px; }
     }
     /* 减少动态：用户系统开启"减少动画"时停用所有动效 */
