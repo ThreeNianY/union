@@ -180,11 +180,10 @@
       <button data-tab="roster">成员名录</button>
       <button data-tab="suggest">提议箱</button>
       <button data-tab="stats">访问统计</button>
-      <button data-tab="bot">机器人状态</button>
+      <button data-tab="bot">系统状态</button>
       <button data-tab="pwd">密码管理</button>
     </div>
     <div class="side-foot">
-      <span class="db-status local" id="dbStatus">本地模式</span>
       <button class="btn-ghost" id="adminLogout">退出登录</button>
       <a href="../index.html" class="back-link">← 返回主页</a>
     </div>
@@ -312,10 +311,15 @@
         <div id="summaryList"></div>
       </div>
 
-      <!-- Tab 9.5：机器人状态 -->
+      <!-- Tab 9.5：系统状态（数据库连接 + 机器人心跳检测） -->
       <div class="tab-pane" id="tab-bot">
         <div style="max-width:480px;margin:10px auto;padding:26px;border-radius:12px;background:var(--bg-soft);text-align:center;">
+          <div style="margin-bottom:20px;">
+            <p style="font-size:13px;color:var(--gray);margin-bottom:8px;">数据库连接</p>
+            <span class="db-status local" id="dbStatus">本地模式</span>
+          </div>
           <div>
+            <p style="font-size:13px;color:var(--gray);margin-bottom:8px;">审批机器人</p>
             <span id="botDot" style="width:14px;height:14px;border-radius:50%;background:#999;display:inline-block;vertical-align:-1px;margin-right:8px;"></span>
             <span id="botStateText" style="font-size:18px;font-weight:bold;">检测中...</span>
           </div>
