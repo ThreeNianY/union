@@ -272,7 +272,7 @@
           <div class="hero-btns">
             <a href="#join" class="btn">申请入会</a>
             <a href="#about" class="btn outline">了解工会</a>
-            <button type="button" class="btn qq" id="heroQQ">加入 QQ 群</button>
+            <a href="https://qm.qq.com/q/l0zZpCHwhW" target="_blank" rel="noopener" class="btn qq">加入 QQ 群</a>
           </div>
         </div>
         <div class="hero-right">
@@ -471,7 +471,7 @@
     }, { passive: true });
     toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-    /* ===================== 2.1 QQ 咨询群：点击一键复制群号 ===================== */
+    /* ===================== 2.1 QQ 咨询群：申请表旁的群号点击一键复制 ===================== */
     const QQ_GROUP = '1105877456';
     async function copyQQGroup() {
       try {
@@ -481,7 +481,6 @@
         window.prompt('请手动复制群号：', QQ_GROUP);  /* 非安全上下文(如http)时兜底 */
       }
     }
-    document.getElementById('heroQQ').addEventListener('click', copyQQGroup);
     document.getElementById('qqNum').addEventListener('click', copyQQGroup);
 
     /* ===================== 2.5 部门卡片：从云端加载各部门实时人数 ===================== */
