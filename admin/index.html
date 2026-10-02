@@ -763,7 +763,7 @@
         const settings = await DB.getSettings();
         const secret = settings.summary_secret || '';
         if (!secret) { showToast('请先在数据库 settings 表添加 summary_secret', 'error'); return; }
-        const res = await fetch(SUPA_URL + '/functions/v1/daily-summary', {
+        const res = await fetch(SUPA_URL + '/functions/v1/dynamic-endpoint', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
