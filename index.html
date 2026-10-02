@@ -76,14 +76,14 @@
     .hero-left h1 { font-size: 52px; margin-bottom: 12px; letter-spacing: 6px; text-shadow: 0 4px 24px rgba(0, 0, 0, .28); animation: heroUp .9s ease both; }
     .hero-left .en { font-size: 15px; letter-spacing: 6px; opacity: .8; margin-bottom: 20px; animation: heroUp .9s .12s ease both; }
     .hero-left p { font-size: 18px; opacity: .92; margin-bottom: 32px; animation: heroUp .9s .22s ease both; }
-    .hero-left .hero-btns { animation: heroUp .9s .34s ease both; }
+    .hero-left .hero-btns { animation: heroUp .9s .34s ease both; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; }
     .hero-left .btn { background: linear-gradient(135deg, var(--gold), #f3c862); color: #3a2a00 !important; font-weight: bold; box-shadow: 0 6px 18px rgba(232, 184, 75, .4); }
     .hero-left .btn:hover { background: linear-gradient(135deg, #f3c862, var(--gold)); box-shadow: 0 10px 26px rgba(232, 184, 75, .5); }
-    .hero-left .btn.outline { background: rgba(255, 255, 255, .1); color: #fff !important; border: 2px solid rgba(255, 255, 255, .85); margin-left: 14px; box-shadow: none; backdrop-filter: blur(4px); }
+    .hero-left .btn.outline { background: rgba(255, 255, 255, .1); color: #fff !important; border: 2px solid rgba(255, 255, 255, .85); box-shadow: none; backdrop-filter: blur(4px); }
     .hero-left .btn.outline:hover { background: rgba(255, 255, 255, .22); box-shadow: none; }
-    /* 首屏 QQ 群按钮 */
-    .hero-left .btn.qq { background: linear-gradient(135deg, #1fb8f5, #0d96d6); color: #fff !important; margin-left: 14px; box-shadow: 0 6px 18px rgba(18, 160, 230, .4); }
-    .hero-left .btn.qq:hover { background: linear-gradient(135deg, #3cc4fa, #12a2e0); }
+    /* 首屏 QQ 群按钮：与 outline 同属玻璃质感，仅用淡 QQ 蓝作识别，不破坏整体配色 */
+    .hero-left .btn.qq { background: rgba(56, 184, 245, .2); color: #fff !important; border: 2px solid rgba(150, 222, 252, .8); box-shadow: none; backdrop-filter: blur(4px); }
+    .hero-left .btn.qq:hover { background: rgba(56, 184, 245, .36); box-shadow: none; }
     /* 申请表上方的 QQ 咨询群提示条 */
     .qq-tip { max-width: 640px; margin: 22px auto 0; background: linear-gradient(135deg, #f0f9ff, #e5f5fd); border: 1px dashed #7cc3e8; border-radius: 12px; padding: 14px 18px; text-align: center; font-size: 14px; color: #35586b; }
     .qq-tip .qq-ico { display: inline-block; background: #12aee8; color: #fff; font-size: 11px; font-weight: bold; padding: 2px 7px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
@@ -208,9 +208,9 @@
       .hero-right { max-width: 100%; }
       .hero-right img { max-width: 100%; }
       .hero-waves svg { height: 70px; }
-      /* 首屏两个按钮手机端改为上下居中排列，更好点按 */
-      .hero .btn { display: block; width: fit-content; margin: 0 auto 12px; }
-      .hero .btn.outline { margin-left: auto; }
+      /* 首屏三个按钮手机端：纵向居中、等宽堆叠，最好点按 */
+      .hero-btns { flex-direction: column; align-items: center; gap: 12px; }
+      .hero .btn { width: 100%; max-width: 300px; margin: 0; text-align: center; }
       .cards { grid-template-columns: 1fr; }
       #join form { padding: 26px 18px; }
       /* 输入框 16px：防止 iOS Safari 聚焦时自动放大页面 */
