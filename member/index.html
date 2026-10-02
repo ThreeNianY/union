@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -244,8 +244,9 @@
   </footer>
 
   <!-- 公共配置与数据层 -->
-  <script src="../config.js?v=4"></script>
+  <script src="../config.js?v=5"></script>
   <script>
+    DB.recordVisit('member');   /* 访问统计上报（静默失败，不影响页面） */
     const gate = document.getElementById('gate');
     const content = document.getElementById('memberContent');
     const gateErr = document.getElementById('gateErr');

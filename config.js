@@ -304,6 +304,84 @@ const DB = {
     }
     const s = JSON.parse(localStorage.getItem('fr_settings') || '{}');
     s[key] = value; localStorage.setItem('fr_settings', JSON.stringify(s));
+  },
+
+  /* --- 访问统计 --- */
+  /* 上报一次访问：page 填 'home' / 'member'；静默失败，绝不影响页面正常加载 */
+  async recordVisit(page) {
+    try {
+      let vid = localStorage.getItem('fr_visitor_id');
+      if (!vid) {
+        vid = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem('fr_visitor_id', vid);
+      }
+      const data = {
+        page: page,
+        referrer: document.referrer || '',
+        ua: (navigator.userAgent || '').slice(0, 200),
+        visitor: vid
+      };
+      if (USE_CLOUD) {
+        await apiFetch('visits', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return;
+      }
+      const arr = JSON.parse(localStorage.getItem('fr_visits') || '[]');
+      arr.push(Object.assign({ created_at: new Date().toISOString() }, data));
+      localStorage.setItem('fr_visits', JSON.stringify(arr.slice(-2000)));
+    } catch (_) { /* 统计失败不打扰用户 */ }
+  },
+  /* 读取统计：累计PV / 今日 / 昨日 / 近7天趋势（PV+UV，按北京时间分天） */
+  async getVisitStats() {
+    const bjDay = t => new Date(new Date(t).getTime() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+    const today = bjDay(Date.now());
+    const yest = bjDay(Date.now() - 86400000);
+    let rows = [], totalPV = 0;
+    if (USE_CLOUD) {
+      /* 累计 PV：只要总数，不拉数据（Prefer: count=exact + limit=0） */
+      const headRes = await apiFetch('visits?select=id&limit=0', { headers: { 'Prefer': 'count=exact' } });
+      const cr = headRes.headers.get('content-range') || '';   /* 形如 */ /* 星号/123 */
+      totalPV = parseInt((cr.split('/')[1] || '0'), 10) || 0;
+      /* 近 8 天明细，用于今日/昨日/近7天趋势 */
+      const since = new Date(Date.now() - 8 * 86400000).toISOString();
+      const res = await apiFetch('visits?select=page,visitor,created_at&created_at=gte.' + since + '&limit=20000');
+      rows = await res.json();
+    } else {
+      rows = JSON.parse(localStorage.getItem('fr_visits') || '[]');
+      totalPV = rows.length;
+    }
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = bjDay(Date.now() - i * 86400000);
+      days.push({ date: d, label: d.slice(5).replace('-', '/'), pv: 0, uvSet: {}, uv: 0 });
+    }
+    let todayPV = 0, yestPV = 0;
+    const todayUv = {}, yestUv = {};
+    rows.forEach(r => {
+      const d = bjDay(r.created_at);
+      for (let i = 0; i < days.length; i++) {
+        if (days[i].date === d) { days[i].pv++; days[i].uvSet[r.visitor] = 1; break; }
+      }
+      if (d === today) { todayPV++; todayUv[r.visitor] = 1; }
+      if (d === yest) { yestPV++; yestUv[r.visitor] = 1; }
+    });
+    days.forEach(d => { d.uv = Object.keys(d.uvSet).length; d.uvSet = undefined; });
+    return {
+      totalPV: totalPV,
+      todayPV: todayPV, todayUV: Object.keys(todayUv).length,
+      yestPV: yestPV, yestUV: Object.keys(yestUv).length,
+      days: days
+    };
+  },
+  /* 读取每日 AI 总结（最近 30 条） */
+  async getDailySummaries() {
+    if (USE_CLOUD) {
+      const res = await apiFetch('daily_summaries?select=summary_date,content,created_at&order=summary_date.desc&limit=30');
+      return await res.json();
+    }
+    return [];
   }
 };
 

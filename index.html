@@ -488,8 +488,9 @@
   <button id="toTop" title="返回顶部">↑</button>
 
   <!-- 公共配置与数据层 -->
-  <script src="config.js?v=4"></script>
+  <script src="config.js?v=5"></script>
   <script>
+    DB.recordVisit('home');   /* 访问统计上报（静默失败，不影响页面） */
     /* ===================== 1. 侧边栏抽屉（手机端） ===================== */
     const sidebar = document.getElementById('sidebar');
     const mask = document.getElementById('mask');

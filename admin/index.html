@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -114,6 +114,20 @@
     .db-status.cloud { background: #e8f5e9; color: var(--green); }
     .db-status.local { background: #fff3cd; color: #856404; }
 
+    /* 访问统计 */
+    .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+    .stat-card { background: var(--bg-soft); border-radius: var(--radius); padding: 16px 10px; text-align: center; }
+    .stat-card .num { font-size: 26px; font-weight: bold; color: var(--blue); }
+    .stat-card .lbl { font-size: 13px; color: var(--gray); margin-top: 2px; }
+    .stat-chart { display: flex; align-items: flex-end; gap: 8px; height: 150px; padding: 6px 4px 0; border-bottom: 2px solid #edf2f6; }
+    .stat-bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
+    .stat-bar .val { font-size: 12px; color: var(--blue); font-weight: bold; }
+    .stat-bar .bar { width: 60%; max-width: 42px; background: linear-gradient(180deg, var(--cyan), var(--blue)); border-radius: 6px 6px 0 0; min-height: 3px; transition: height .3s; }
+    .stat-bar .day { font-size: 12px; color: var(--gray); }
+    .summary-item { background: var(--bg-soft); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; }
+    .summary-item .sdate { font-size: 13px; color: var(--blue); font-weight: bold; margin-bottom: 6px; }
+    .summary-item .sbody { font-size: 14px; white-space: pre-wrap; word-break: break-word; }
+
     footer { background: #142a36; color: #9fb3bf; text-align: center; padding: 28px 20px; font-size: 14px; }
 
     @media (max-width: 700px) {
@@ -163,6 +177,7 @@
         <button data-tab="friendlinks">友情链接</button>
         <button data-tab="roster">成员名录</button>
         <button data-tab="suggest">提议箱</button>
+        <button data-tab="stats">访问统计</button>
         <button data-tab="pwd">密码管理</button>
       </div>
 
@@ -257,7 +272,19 @@
         <p class="empty-tip" id="friendLinkEmptyTip">暂无友情链接</p>
       </div>
 
-      <!-- Tab 8：密码管理 -->
+      <!-- Tab 8：访问统计 -->
+      <div class="tab-pane" id="tab-stats">
+        <div class="stat-cards" id="statCards"></div>
+        <h4 style="margin:24px 0 6px;font-size:15px;">近 7 天访问趋势</h4>
+        <div class="stat-chart" id="statChart"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:28px 0 12px;gap:10px;flex-wrap:wrap;">
+          <h4 style="font-size:15px;">每日 AI 总结（豆包大模型 · 每天凌晨自动生成）</h4>
+          <button class="btn" id="genSummaryBtn" style="padding:7px 18px;font-size:13px;">立即生成昨日总结</button>
+        </div>
+        <div id="summaryList"></div>
+      </div>
+
+      <!-- Tab 9：密码管理 -->
       <div class="tab-pane" id="tab-pwd">
         <p class="empty-tip" style="text-align:left;padding:0 0 14px;">修改两个访问密码（都保存在云端）</p>
         <div style="max-width:400px;margin:0 auto;">
@@ -283,7 +310,7 @@
   <!-- Tesseract.js：浏览器端 OCR 图片文字识别（免费，无需密钥） -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <!-- 公共配置与数据层 -->
-  <script src="../config.js?v=4"></script>
+  <script src="../config.js?v=5"></script>
   <script>
     const gate = document.getElementById('gate');
     const adminPanel = document.getElementById('adminPanel');
@@ -694,7 +721,67 @@
     async function refreshAll() {
       await renderAdminApps(); await loadNoticeEdit(); await loadInfoEdit();
       await renderAdminLinks(); await renderFriendLinks(); await renderAdminMembers(); await renderSuggestions(); await loadPwdEdit();
+      await renderStats();
     }
+
+    /* ===================== Tab 8：访问统计 ===================== */
+    async function renderStats() {
+      const cardsEl = document.getElementById('statCards');
+      const chartEl = document.getElementById('statChart');
+      const listEl = document.getElementById('summaryList');
+      cardsEl.innerHTML = loadingHTML('统计加载中...');
+      chartEl.innerHTML = ''; listEl.innerHTML = '';
+      try {
+        const s = await DB.getVisitStats();
+        cardsEl.innerHTML = [
+          ['今日访问 (PV)', s.todayPV], ['今日访客 (UV)', s.todayUV],
+          ['昨日访问 (PV)', s.yestPV], ['昨日访客 (UV)', s.yestUV],
+          ['累计访问 (PV)', s.totalPV]
+        ].map(x => `<div class="stat-card"><div class="num">${x[1]}</div><div class="lbl">${x[0]}</div></div>`).join('');
+        const max = Math.max(...s.days.map(d => d.pv), 1);
+        chartEl.innerHTML = s.days.map(d =>
+          `<div class="stat-bar"><span class="val">${d.pv || ''}</span><div class="bar" style="height:${Math.max(Math.round(d.pv / max * 100), 2)}%" title="${d.date}：${d.pv} 次访问 / ${d.uv} 位访客"></div><span class="day">${d.label}</span></div>`
+        ).join('');
+      } catch (e) {
+        cardsEl.innerHTML = '';
+        showRetry(cardsEl, renderStats, '统计加载失败（请确认 visits 表已在数据库创建）');
+        return;
+      }
+      try {
+        const list = await DB.getDailySummaries();
+        listEl.innerHTML = list.length
+          ? list.map(x => `<div class="summary-item"><div class="sdate">${esc(x.summary_date)}</div><div class="sbody">${esc(x.content)}</div></div>`).join('')
+          : '<p class="empty-tip">暂无总结 —— 每天凌晨自动生成，也可点右上角按钮立即生成</p>';
+      } catch (e) { listEl.innerHTML = '<p class="empty-tip">总结加载失败（请确认 daily_summaries 表已创建）</p>'; }
+    }
+
+    /* 手动触发"昨日总结"：调用 Supabase Edge Function（密钥存在 settings 表） */
+    document.getElementById('genSummaryBtn').addEventListener('click', async e => {
+      const btn = e.target;
+      setBtnLoading(btn, true, '生成中...');
+      try {
+        const settings = await DB.getSettings();
+        const secret = settings.summary_secret || '';
+        if (!secret) { showToast('请先在数据库 settings 表添加 summary_secret', 'error'); return; }
+        const res = await fetch(SUPA_URL + '/functions/v1/daily-summary', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + SUPA_KEY,
+            'x-summary-secret': secret
+          },
+          body: '{}'
+        });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j.error || ('错误码 ' + res.status));
+        showToast('已生成 ' + j.date + ' 的总结', 'success');
+        await renderStats();
+      } catch (err) {
+        showToast('生成失败：' + err.message, 'error');
+      } finally {
+        setBtnLoading(btn, false);
+      }
+    });
   </script>
 </body>
 </html>
