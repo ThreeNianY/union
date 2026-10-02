@@ -351,7 +351,7 @@
       <!-- 加入只需三步 -->
       <div class="container join-steps reveal">
         <div class="step"><b>1</b><div><h4>填写申请</h4><p>点击下方"入会申请"，花两分钟填完问卷</p></div></div>
-        <div class="step"><b>2</b><div><h4>等待审核</h4><p>管理员看到你的申请后会通过 QQ 联系你</p></div></div>
+        <div class="step"><b>2</b><div><h4>加入 QQ 群</h4><p>提交申请后务必加入工会 QQ 群，等待管理员审核</p></div></div>
         <div class="step"><b>3</b><div><h4>正式加入</h4><p>进入工会群，选择部门，开始一起玩</p></div></div>
       </div>
     </section>
@@ -419,8 +419,8 @@
         <h2 class="sec-title reveal">入会<span>申请</span></h2>
         <p class="sec-sub reveal">填写信息加入工会，开启你的方块冒险</p>
         <div class="qq-tip reveal">
-          <span class="qq-ico">QQ</span>有疑问想先了解、或不想等审核？欢迎加入咨询群，群号
-          <button type="button" class="qq-num" id="qqNum">1105877456</button>（点击一键复制）
+          <span class="qq-ico">QQ</span><strong>申请入会必须加入工会 QQ 群</strong>，群号
+          <button type="button" class="qq-num" id="qqNum">1105877456</button>（点击一键复制）。审核结果与后续安排都会在群内通知，<strong>不加群将无法完成入会</strong>
         </div>
         <form id="joinForm" class="reveal">
           <div class="form-group">
@@ -428,7 +428,7 @@
             <input type="text" name="ign" placeholder="请输入你的 QQ 昵称" required />
           </div>
           <div class="form-group">
-            <p class="q-title"><span class="q-no">2.</span>你的 QQ 号<span class="opt">（审核通过后凭此联系你，必填）</span></p>
+            <p class="q-title"><span class="q-no">2.</span>你的 QQ 号<span class="opt">（必填，请与申请进群的 QQ 号一致，用于审核核对）</span></p>
             <input type="text" name="qq" inputmode="numeric" pattern="[1-9][0-9]{4,11}" title="请输入 5~12 位 QQ 号" placeholder="请输入你的 QQ 号（纯数字）" required />
           </div>
           <div class="form-group">
@@ -692,7 +692,7 @@
       try {
         await DB.addApp({ ign, email: qq, server: online, skill, msg: detail, time: new Date().toLocaleString('zh-CN'), status: 'pending' });
         localStorage.removeItem('join_draft');
-        showToast('申请提交成功！管理审核通过后会通过 QQ 联系你', 'success');
+        showToast('申请提交成功！请务必加入工会 QQ 群（群号见申请表上方），等待管理员审核', 'success');
         this.reset();
       } catch (err) {
         showToast('提交失败：' + err.message, 'error');
