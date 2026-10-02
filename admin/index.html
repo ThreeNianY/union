@@ -18,15 +18,34 @@
     a { text-decoration: none; color: inherit; }
     .hidden { display: none !important; }
 
-    /* 顶部导航（简化版） */
-    header { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.95); box-shadow: var(--shadow); }
-    .nav { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
-    .logo { font-size: 20px; font-weight: bold; color: var(--blue); display: flex; align-items: center; gap: 10px; }
-    .logo img { height: 36px; width: auto; display: block; }   /* logo 图片 */
-    .logo small { color: var(--gray); font-size: 12px; font-weight: normal; }
-    /* 返回主页按钮：导航栏右侧圆形回箭头 */
-    .back-home { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-soft); color: var(--blue); font-size: 22px; line-height: 1; transition: background .2s, transform .2s; }
-    .back-home:hover { background: #d7eaf5; transform: translateX(-2px); }
+    /* ========== 左侧边栏（桌面端常驻，手机端为抽屉；未登录时隐藏） ========== */
+    :root { --sidebar-w: 230px; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w); z-index: 300;
+      display: flex; flex-direction: column; padding: 24px 14px;
+      background: linear-gradient(180deg, var(--blue-dark), var(--blue));
+      transition: transform .3s;
+    }
+    .sidebar .logo { color: #fff; font-size: 19px; font-weight: bold; padding: 4px 10px 16px; border-bottom: 1px solid rgba(255,255,255,.18); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+    .sidebar .logo img { height: 34px; width: auto; display: block; }
+    .sidebar .logo small { color: rgba(255,255,255,.65); font-size: 12px; font-weight: normal; }
+    /* 未登录时：完全隐藏侧栏/汉堡按钮/遮罩，内容区占满整页 */
+    body.locked .sidebar, body.locked .menu-btn, body.locked .mask { display: none; }
+    body.locked .page { margin-left: 0; }
+    .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.15); }
+    .side-foot .db-status { text-align: center; }
+    .side-foot .btn-ghost { width: 100%; background: rgba(255,255,255,.14); color: #fff; }
+    .side-foot .btn-ghost:hover { background: rgba(255,255,255,.24); }
+    .side-foot .back-link { display: block; text-align: center; padding: 9px; border-radius: 30px; background: rgba(255,255,255,.12); color: #fff; font-size: 13.5px; transition: background .2s; }
+    .side-foot .back-link:hover { background: rgba(255,255,255,.22); }
+
+    /* 主内容区：桌面端让出侧栏宽度 */
+    .page { margin-left: var(--sidebar-w); }
+
+    /* 手机端：汉堡按钮 + 半透明遮罩 */
+    .menu-btn { display: none; position: fixed; top: 14px; left: 14px; z-index: 400; width: 44px; height: 44px; border: none; border-radius: 50%; background: rgba(255,255,255,.95); box-shadow: var(--shadow); color: var(--blue); font-size: 22px; cursor: pointer; align-items: center; justify-content: center; }
+    .mask { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 250; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
+    .mask.show { opacity: 1; visibility: visible; }
 
     /* 密码验证卡片：顶部潮汐渐变条 */
     .gate { position: relative; overflow: hidden; max-width: 380px; margin: 90px auto; background: #fff; border-radius: 16px; padding: 44px 32px 40px; box-shadow: 0 14px 44px rgba(12,123,179,.16); text-align: center; }
@@ -45,11 +64,11 @@
     .admin-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
     .admin-bar h2 { font-size: 20px; }
     .admin-bar > div { display: flex; gap: 8px; align-items: center; }
-    /* 胶囊式页签 */
-    .admin-tabs { display: flex; gap: 8px; border-bottom: none; margin-bottom: 18px; flex-wrap: wrap; }
-    .admin-tabs button { background: var(--bg-soft); border: none; padding: 8px 18px; cursor: pointer; font-size: 14px; font-family: inherit; color: var(--gray); border-radius: 999px; transition: all .18s; }
-    .admin-tabs button:hover { color: var(--blue); background: #e2f0f8; }
-    .admin-tabs button.active { background: linear-gradient(135deg, var(--blue), #0e8fc9); color: #fff; font-weight: bold; box-shadow: 0 4px 12px rgba(12,123,179,.3); }
+    /* 侧栏功能菜单（整行可点，当前项高亮） */
+    .admin-tabs { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+    .admin-tabs button { text-align: left; background: transparent; border: none; padding: 11px 14px; border-radius: 10px; color: rgba(255,255,255,.92); font-size: 14.5px; font-family: inherit; cursor: pointer; transition: background .2s, transform .2s; }
+    .admin-tabs button:hover { background: rgba(255,255,255,.14); color: #fff; transform: translateX(4px); }
+    .admin-tabs button.active { background: rgba(255,255,255,.2); color: #fff; font-weight: bold; box-shadow: inset 3px 0 0 var(--gold); }
     .tab-pane { display: none; } .tab-pane.active { display: block; }
 
     /* 申请表格 */
@@ -130,24 +149,47 @@
 
     footer { background: #142a36; color: #9fb3bf; text-align: center; padding: 28px 20px; font-size: 14px; }
 
+    @media (max-width: 900px) {
+      /* 手机端：内容占满宽度，侧栏变为抽屉默认藏在左侧 */
+      .page { margin-left: 0; }
+      .menu-btn { display: flex; }
+      .sidebar { transform: translateX(-100%); box-shadow: 4px 0 24px rgba(0,0,0,.25); }
+      .sidebar.open { transform: none; }
+    }
     @media (max-width: 700px) {
       .link-row, .link-add-bar, .member-add-bar { grid-template-columns: 1fr 1fr; }
       .gate { margin: 50px auto; }
     }
   </style>
 </head>
-<body>
+<body class="locked">
 
-  <!-- 顶部导航 -->
-  <header>
-    <nav class="nav">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <a class="back-home" href="../index.html" title="返回主页">←</a>
-        <div class="logo"><img class="logo-img" alt="潮汐聚澜" /><small>管理后台</small></div>
-      </div>
-    </nav>
-  </header>
+  <!-- 手机端汉堡按钮 + 遮罩 -->
+  <button class="menu-btn" id="menuBtn" aria-label="打开菜单">☰</button>
+  <div class="mask" id="mask"></div>
 
+  <!-- 左侧边栏：功能菜单（登录后显示） -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo"><img class="logo-img" alt="潮汐聚澜" /><small>管理后台</small></div>
+    <div class="admin-tabs" id="adminTabs">
+      <button class="active" data-tab="apps">入会申请</button>
+      <button data-tab="notice">成员公告</button>
+      <button data-tab="info">规则与服务器</button>
+      <button data-tab="links">网页导航</button>
+      <button data-tab="friendlinks">友情链接</button>
+      <button data-tab="roster">成员名录</button>
+      <button data-tab="suggest">提议箱</button>
+      <button data-tab="stats">访问统计</button>
+      <button data-tab="pwd">密码管理</button>
+    </div>
+    <div class="side-foot">
+      <span class="db-status local" id="dbStatus">本地模式</span>
+      <button class="btn-ghost" id="adminLogout">退出登录</button>
+      <a href="../index.html" class="back-link">← 返回主页</a>
+    </div>
+  </aside>
+
+  <div class="page">
   <!-- 密码验证（未登录时显示） -->
   <div class="gate" id="gate">
     <h2>管理员后台</h2>
@@ -163,22 +205,7 @@
   <div class="admin-wrap hidden" id="adminPanel">
     <div class="admin-panel">
       <div class="admin-bar">
-        <h2>管理员后台</h2>
-        <div>
-          <span class="db-status local" id="dbStatus">本地模式</span>
-          <button class="btn-ghost" id="adminLogout">退出登录</button>
-        </div>
-      </div>
-      <div class="admin-tabs" id="adminTabs">
-        <button class="active" data-tab="apps">入会申请</button>
-        <button data-tab="notice">成员公告</button>
-        <button data-tab="info">规则与服务器</button>
-        <button data-tab="links">网页导航</button>
-        <button data-tab="friendlinks">友情链接</button>
-        <button data-tab="roster">成员名录</button>
-        <button data-tab="suggest">提议箱</button>
-        <button data-tab="stats">访问统计</button>
-        <button data-tab="pwd">密码管理</button>
+        <h2 id="adminTitle">入会申请</h2>
       </div>
 
       <!-- Tab 1：入会申请 -->
@@ -306,11 +333,12 @@
   <footer>
     <p>© 2026 潮汐聚澜工会 | 汇聚潮汐之力，共建温馨工会</p>
   </footer>
+  </div><!-- /.page -->
 
   <!-- Tesseract.js：浏览器端 OCR 图片文字识别（免费，无需密钥） -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <!-- 公共配置与数据层 -->
-  <script src="../config.js?v=5"></script>
+  <script src="../config.js?v=6"></script>
   <script>
     const gate = document.getElementById('gate');
     const adminPanel = document.getElementById('adminPanel');
@@ -325,12 +353,14 @@
     function enterAdmin() {
       gate.classList.add('hidden');
       adminPanel.classList.remove('hidden');
+      document.body.classList.remove('locked');
       refreshAll();
     }
     function exitAdmin() {
       sessionStorage.removeItem('fr_admin');
       adminPanel.classList.add('hidden');
       gate.classList.remove('hidden');
+      document.body.classList.add('locked');
       document.getElementById('gateForm').reset();
       gateErr.textContent = '';
     }
@@ -379,11 +409,26 @@
       } catch (err) { gateErr.textContent = '网络错误，请稍后重试'; }
     });
 
-    /* ===================== Tab 切换 ===================== */
+    /* ===================== 侧栏抽屉（手机端） ===================== */
+    const sidebar = document.getElementById('sidebar');
+    const menuBtn = document.getElementById('menuBtn');
+    const mask = document.getElementById('mask');
+    function setMenu(open) {
+      sidebar.classList.toggle('open', open);
+      mask.classList.toggle('show', open);
+      menuBtn.textContent = open ? '✕' : '☰';
+      menuBtn.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
+    }
+    menuBtn.addEventListener('click', () => setMenu(!sidebar.classList.contains('open')));
+    mask.addEventListener('click', () => setMenu(false));
+
+    /* ===================== Tab 切换（侧栏菜单） ===================== */
     document.getElementById('adminTabs').addEventListener('click', e => {
       if (!e.target.dataset.tab) return;
       document.querySelectorAll('#adminTabs button').forEach(b => b.classList.toggle('active', b === e.target));
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + e.target.dataset.tab));
+      document.getElementById('adminTitle').textContent = e.target.textContent;   /* 面板标题跟随当前功能 */
+      setMenu(false);   /* 手机端点完菜单自动收起抽屉 */
     });
 
     /* ===================== Tab 1：申请列表 ===================== */

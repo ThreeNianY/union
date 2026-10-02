@@ -515,6 +515,96 @@ function showRetry(el, retryFn, text) {
   });
 }
 
+/* ============================================================
+ * 深色模式（三个页面共享）
+ * - 主题存 localStorage('fr_theme')，首次访问跟随系统偏好
+ * - 用 html.dark 类切换：变量整体覆盖 + 各页面硬编码颜色覆盖
+ * - 左下角悬浮圆形按钮随时切换
+ * ============================================================ */
+const THEME_KEY = 'fr_theme';
+function getTheme() {
+  try {
+    const t = localStorage.getItem(THEME_KEY);
+    if (t === 'dark' || t === 'light') return t;
+  } catch (_) {}
+  return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+}
+function applyTheme(t) {
+  document.documentElement.classList.toggle('dark', t === 'dark');
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.textContent = t === 'dark' ? '☀️' : '🌙';
+    btn.title = t === 'dark' ? '切换到浅色模式' : '切换到深色模式';
+    btn.setAttribute('aria-label', btn.title);
+  }
+}
+function toggleTheme() {
+  const t = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+  try { localStorage.setItem(THEME_KEY, t); } catch (_) {}
+  applyTheme(t);
+}
+applyTheme(getTheme());   /* 脚本在 body 末尾执行，此处立即应用可避免刷新时闪烁 */
+
+/* 深色模式样式：变量覆盖 + 各页面白色卡片/表单/边框的统一深色化 */
+(function injectDarkCSS() {
+  const css = `
+  html.dark { --bg: #0d1822; --bg-soft: #14273a; --text: #d8e5ee; --gray: #93aabb; --shadow: 0 6px 20px rgba(0, 0, 0, .45); }
+  html.dark body { background: var(--bg); color: var(--text); }
+  /* 白色卡片 → 深海蓝卡片 */
+  html.dark .card, html.dark .faq-item, html.dark .friend-link, html.dark .join-steps .step,
+  html.dark .notice-box, html.dark .nav-card, html.dark .roster-dept, html.dark .suggest-form,
+  html.dark .gate, html.dark .admin-panel, html.dark #join form { background: #18293b; }
+  html.dark #join form { border-color: #243d53; }
+  html.dark .roster-dept.mgmt { background: linear-gradient(180deg, #26260f, #18293b); }
+  html.dark .roster-dept.mgmt li { border-bottom-color: #3a3624; }
+  html.dark .roster-dept li { border-bottom-color: #22384c; }
+  /* 表单控件（!important 用于覆盖个别输入框的内联背景色） */
+  html.dark .form-group input, html.dark .form-group textarea, html.dark .form-group select,
+  html.dark .gate input, html.dark .notice-edit textarea, html.dark .info-edit textarea,
+  html.dark .link-row input, html.dark .link-add-bar input, html.dark .link-add-bar select,
+  html.dark .member-add-bar input, html.dark .member-add-bar select,
+  html.dark .ocr-bar select, html.dark .ocr-box textarea, html.dark .cell-select,
+  html.dark #curMemberPwd, html.dark #curAdminPwd { background: #10202f !important; color: var(--text); border-color: #2a4459; }
+  html.dark input::placeholder, html.dark textarea::placeholder { color: #5d7688; }
+  html.dark .choice-group label { background: #10202f; border-color: #2a4459; }
+  /* 后台专属 */
+  html.dark th, html.dark td { border-bottom-color: #22384c; }
+  html.dark .copy-btn { background: #10202f; }
+  html.dark .copy-btn:hover { background: var(--blue); }
+  html.dark .btn-ghost { background: #1e3145; color: var(--text); }
+  html.dark .btn-ghost:hover { background: #26405a; }
+  html.dark .stat-chart { border-bottom-color: #22384c; }
+  html.dark .db-status.cloud { background: #143a24; color: #5fd68a; }
+  html.dark .db-status.local { background: #3a2f10; color: #e8c860; }
+  html.dark #tab-pwd hr { border-top-color: #22384c !important; }
+  /* 首页专属：海浪与下方深色区块衔接、QQ 提示条 */
+  html.dark .hero-waves .w2 { fill: #0d1822; }
+  html.dark .qq-tip { background: linear-gradient(135deg, #12293c, #10233a); color: #a8c4d8; border-color: #2a5a7a; }
+  /* 手机端汉堡按钮 / 加载圈 */
+  html.dark .menu-btn { background: rgba(24, 41, 59, .95); color: #7fd4f2; }
+  html.dark .cx-spinner { border-color: #2a4459; border-top-color: #4dd0e1; }
+  html.dark .cx-loading { color: #93aabb; }
+  /* 主题切换悬浮按钮（左下角，与右下角"返回顶部"错开） */
+  #themeToggle { position: fixed; left: 24px; bottom: 24px; z-index: 400; width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer; font-size: 21px; line-height: 1; background: linear-gradient(135deg, var(--blue), #0e8fc9); color: #fff; box-shadow: 0 4px 14px rgba(12, 123, 179, .4); display: flex; align-items: center; justify-content: center; transition: transform .2s, box-shadow .2s; }
+  #themeToggle:hover { transform: scale(1.1); box-shadow: 0 8px 20px rgba(12, 123, 179, .5); }
+  @media (max-width: 600px) { #themeToggle { left: 16px; bottom: 16px; width: 42px; height: 42px; font-size: 19px; } }
+  `;
+  const style = document.createElement('style');
+  style.setAttribute('data-cx-dark', '1');
+  style.textContent = css;
+  (document.head || document.getElementsByTagName('head')[0]).appendChild(style);
+})();
+
+/* 页面加载完成后挂出切换按钮 */
+document.addEventListener('DOMContentLoaded', function () {
+  const b = document.createElement('button');
+  b.id = 'themeToggle';
+  b.type = 'button';
+  b.addEventListener('click', toggleTheme);
+  document.body.appendChild(b);
+  applyTheme(getTheme());   /* 补上图标 */
+});
+
 /* ---------- 按钮 loading：禁用+转圈，结束后恢复原内容 ---------- */
 function setBtnLoading(btn, loading, loadingText) {
   if (!btn) return;
