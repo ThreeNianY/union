@@ -167,7 +167,7 @@
     .admin-link a { color: #5d7180; }
     .admin-link a:hover { color: #9fb3bf; text-decoration: underline; }
 
-    #toTop { position: fixed; right: 24px; bottom: 24px; width: 44px; height: 44px; border: none; border-radius: 50%; background: var(--blue); color: #fff; font-size: 20px; cursor: pointer; display: none; box-shadow: var(--shadow); z-index: 200; }
+    #toTop { position: fixed; right: 24px; bottom: 84px; width: 44px; height: 44px; border: none; border-radius: 50%; background: var(--blue); color: #fff; font-size: 20px; cursor: pointer; display: none; box-shadow: var(--shadow); z-index: 200; }
     .reveal { opacity: 0; transform: translateY(28px); transition: opacity .6s ease, transform .6s cubic-bezier(.22,.8,.36,1); }
     .reveal.show { opacity: 1; transform: none; }
     /* 卡片交错入场：每张延迟 80ms，形成"依次浮现"的节奏感 */
@@ -246,7 +246,7 @@
       .stat { padding: 20px; display: flex; align-items: center; justify-content: center; gap: 14px; }
       .stat b { font-size: 30px; }
       .stat span { font-size: 15px; }
-      #toTop { right: 16px; bottom: 16px; }
+      #toTop { right: 16px; bottom: 76px; }
     }
     /* 减少动态：用户系统开启"减少动画"时停用所有动效 */
     @media (prefers-reduced-motion: reduce) {
@@ -489,7 +489,7 @@
   <button id="toTop" title="返回顶部">↑</button>
 
   <!-- 公共配置与数据层 -->
-  <script src="config.js?v=6"></script>
+  <script src="config.js?v=7"></script>
   <script>
     DB.recordVisit('home');   /* 访问统计上报（静默失败，不影响页面） */
     /* ===================== 1. 侧边栏抽屉（手机端） ===================== */

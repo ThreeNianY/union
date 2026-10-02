@@ -584,10 +584,10 @@ applyTheme(getTheme());   /* 脚本在 body 末尾执行，此处立即应用可
   html.dark .menu-btn { background: rgba(24, 41, 59, .95); color: #7fd4f2; }
   html.dark .cx-spinner { border-color: #2a4459; border-top-color: #4dd0e1; }
   html.dark .cx-loading { color: #93aabb; }
-  /* 主题切换悬浮按钮（左下角，与右下角"返回顶部"错开） */
-  #themeToggle { position: fixed; left: 24px; bottom: 24px; z-index: 400; width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer; font-size: 21px; line-height: 1; background: linear-gradient(135deg, var(--blue), #0e8fc9); color: #fff; box-shadow: 0 4px 14px rgba(12, 123, 179, .4); display: flex; align-items: center; justify-content: center; transition: transform .2s, box-shadow .2s; }
+  /* 主题切换悬浮按钮（右下角；主页"返回顶部"按钮已上移让位） */
+  #themeToggle { position: fixed; right: 24px; bottom: 24px; z-index: 400; width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer; font-size: 21px; line-height: 1; background: linear-gradient(135deg, var(--blue), #0e8fc9); color: #fff; box-shadow: 0 4px 14px rgba(12, 123, 179, .4); display: flex; align-items: center; justify-content: center; transition: transform .2s, box-shadow .2s; }
   #themeToggle:hover { transform: scale(1.1); box-shadow: 0 8px 20px rgba(12, 123, 179, .5); }
-  @media (max-width: 600px) { #themeToggle { left: 16px; bottom: 16px; width: 42px; height: 42px; font-size: 19px; } }
+  @media (max-width: 600px) { #themeToggle { right: 16px; bottom: 16px; width: 42px; height: 42px; font-size: 19px; } }
   `;
   const style = document.createElement('style');
   style.setAttribute('data-cx-dark', '1');
