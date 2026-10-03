@@ -63,6 +63,7 @@
     .admin-panel { background: #fff; border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
     .admin-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
     .admin-bar h2 { font-size: 20px; }
+    .sub-title { font-size: 16px; color: var(--blue); margin: 0 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--bg-soft); }
     .admin-bar > div { display: flex; gap: 8px; align-items: center; }
     /* 侧栏功能菜单（整行可点，当前项高亮） */
     .admin-tabs { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
@@ -173,13 +174,10 @@
     <div class="logo"><img class="logo-img" alt="潮汐聚澜" /><small>管理后台</small></div>
     <div class="admin-tabs" id="adminTabs">
       <button class="active" data-tab="apps">入会申请</button>
-      <button data-tab="notice">成员公告</button>
-      <button data-tab="info">规则与服务器</button>
-      <button data-tab="links">网页导航</button>
-      <button data-tab="friendlinks">友情链接</button>
-      <button data-tab="roster">成员名录</button>
-      <button data-tab="suggest">提议箱</button>
-      <button data-tab="stats">访问统计</button>
+      <button data-tab="content">内容管理</button>
+      <button data-tab="navlinks">导航与链接</button>
+      <button data-tab="members">成员与反馈</button>
+      <button data-tab="stats">数据统计</button>
       <button data-tab="bot">系统状态</button>
       <button data-tab="pwd">密码管理</button>
     </div>
@@ -215,31 +213,29 @@
         <p class="empty-tip" id="emptyTip">暂无申请记录</p>
       </div>
 
-      <!-- Tab 2：公告编辑 -->
-      <div class="tab-pane" id="tab-notice">
+      <!-- Tab 2：内容管理（公告 + 规则 + 服务器） -->
+      <div class="tab-pane" id="tab-content">
+        <h3 class="sub-title">成员公告</h3>
         <div class="notice-edit">
-          <textarea id="noticeEdit" rows="10" placeholder="在此输入成员公告内容，支持多行文本"></textarea>
+          <textarea id="noticeEdit" rows="8" placeholder="在此输入成员公告内容，支持多行文本"></textarea>
           <div class="save-bar"><button class="btn" id="saveNotice">保存公告</button></div>
           <p class="empty-tip" id="noticeStatus" style="text-align:left;"></p>
         </div>
-      </div>
-
-      <!-- Tab 3：规则与服务器 -->
-      <div class="tab-pane" id="tab-info">
+        <h3 class="sub-title" style="margin-top:28px;">工会规则</h3>
         <div class="info-edit">
-          <h4>工会规则（一行一条，成员专区展示）</h4>
-          <textarea id="rulesEdit" rows="8" placeholder="例如：&#10;1. 禁止私拿大量公会资源，若有较大需求请先上报&#10;2. 若有建筑需求，请先选好一块地申请待许可"></textarea>
+          <textarea id="rulesEdit" rows="7" placeholder="例如：&#10;1. 禁止私拿大量公会资源，若有较大需求请先上报&#10;2. 若有建筑需求，请先选好一块地申请待许可"></textarea>
           <div class="save-bar"><span class="status" id="rulesStatus"></span><button class="btn" id="saveRules">保存规则</button></div>
         </div>
+        <h3 class="sub-title" style="margin-top:28px;">服务器信息</h3>
         <div class="info-edit">
-          <h4>服务器信息（地址、版本、入服教程等）</h4>
-          <textarea id="serversEdit" rows="8" placeholder="例如：&#10;【网易服】21892880 / 3F14DBB3697（狐狸的头头服）&#10;【JAVA服】简竹路了（暂定）"></textarea>
+          <textarea id="serversEdit" rows="7" placeholder="例如：&#10;【网易服】21892880 / 3F14DBB3697（狐狸的头头服）&#10;【JAVA服】简竹路了（暂定）"></textarea>
           <div class="save-bar"><span class="status" id="serversStatus"></span><button class="btn" id="saveServers">保存服务器信息</button></div>
         </div>
       </div>
 
-      <!-- Tab 4：导航管理 -->
-      <div class="tab-pane" id="tab-links">
+      <!-- Tab 3：导航与链接（网页导航 + 友情链接） -->
+      <div class="tab-pane" id="tab-navlinks">
+        <h3 class="sub-title">网页导航（成员专区展示）</h3>
         <p class="empty-tip" style="text-align:left;padding:0 0 14px;">添加新链接（名称 / 网址 / 描述）</p>
         <div class="link-add-bar">
           <input type="text" id="newLinkName" placeholder="链接名称" />
@@ -249,10 +245,21 @@
         </div>
         <div id="linkList"></div>
         <p class="empty-tip" id="linkEmptyTip">暂无导航链接</p>
+        <h3 class="sub-title" style="margin-top:28px;">友情链接（主页展示）</h3>
+        <p class="empty-tip" style="text-align:left;padding:0 0 14px;">添加新链接（名称 / 网址 / 描述）</p>
+        <div class="link-add-bar">
+          <input type="text" id="newFriendLinkName" placeholder="链接名称" />
+          <input type="text" id="newFriendLinkUrl" placeholder="https://..." />
+          <input type="text" id="newFriendLinkDesc" placeholder="简短描述" />
+          <button class="btn" id="addFriendLink">添加</button>
+        </div>
+        <div id="friendLinkList"></div>
+        <p class="empty-tip" id="friendLinkEmptyTip">暂无友情链接</p>
       </div>
 
-      <!-- Tab 5：成员名录 -->
-      <div class="tab-pane" id="tab-roster">
+      <!-- Tab 4：成员与反馈（名录 + 提议箱） -->
+      <div class="tab-pane" id="tab-members">
+        <h3 class="sub-title">成员名录</h3>
         <div class="ocr-box">
           <h4>图片识别导入：上传成员名单截图，自动识别名字（每行一个）</h4>
           <input type="file" id="ocrFile" accept="image/*" />
@@ -278,25 +285,9 @@
         </div>
         <div style="overflow-x:auto;"><table><thead><tr><th>游戏ID</th><th>职务（可改）</th><th>部门（可改）</th><th>第二部门（可改）</th><th>服务器（可改）</th><th>操作</th></tr></thead><tbody id="memberBody"></tbody></table></div>
         <p class="empty-tip" id="memberEmptyTip">暂无成员记录</p>
-      </div>
-
-      <!-- Tab 6：提议箱 -->
-      <div class="tab-pane" id="tab-suggest">
+        <h3 class="sub-title" style="margin-top:28px;">提议箱</h3>
         <div style="overflow-x:auto;"><table><thead><tr><th>提交时间</th><th>署名</th><th>建议内容</th><th>状态</th><th>操作</th></tr></thead><tbody id="sugBody"></tbody></table></div>
         <p class="empty-tip" id="sugEmptyTip">暂无建议</p>
-      </div>
-
-      <!-- Tab 7：友情链接（主页展示，与网页导航独立） -->
-      <div class="tab-pane" id="tab-friendlinks">
-        <p class="empty-tip" style="text-align:left;padding:0 0 14px;">添加新链接（名称 / 网址 / 描述）</p>
-        <div class="link-add-bar">
-          <input type="text" id="newFriendLinkName" placeholder="链接名称" />
-          <input type="text" id="newFriendLinkUrl" placeholder="https://..." />
-          <input type="text" id="newFriendLinkDesc" placeholder="简短描述" />
-          <button class="btn" id="addFriendLink">添加</button>
-        </div>
-        <div id="friendLinkList"></div>
-        <p class="empty-tip" id="friendLinkEmptyTip">暂无友情链接</p>
       </div>
 
       <!-- Tab 8：访问统计 -->
@@ -309,6 +300,10 @@
           <button class="btn" id="genSummaryBtn" style="padding:7px 18px;font-size:13px;">立即生成昨日总结</button>
         </div>
         <div id="summaryList"></div>
+        <h3 class="sub-title" style="margin-top:28px;">QQ 入群白名单</h3>
+        <p class="empty-tip" style="text-align:left;padding:0 0 14px;">以下为后台已同意、可自动通过大群入群申请的 QQ 号（来源：入会申请表 status=approved）</p>
+        <div style="overflow-x:auto;"><table><thead><tr><th>QQ 号</th><th>游戏 ID</th><th>擅长</th><th>同意时间</th></tr></thead><tbody id="whitelistBody"></tbody></table></div>
+        <p class="empty-tip" id="whitelistEmptyTip">暂无白名单成员</p>
       </div>
 
       <!-- Tab 9.5：系统状态（数据库连接 + 机器人心跳检测） -->
@@ -450,6 +445,7 @@
       document.getElementById('adminTitle').textContent = e.target.textContent;   /* 面板标题跟随当前功能 */
       setMenu(false);   /* 手机端点完菜单自动收起抽屉 */
       if (e.target.dataset.tab === 'bot') renderBotStatus();
+      if (e.target.dataset.tab === 'stats') renderWhitelist();
     });
 
     /* ===================== Tab 9.5：机器人状态（心跳检测） ===================== */
@@ -489,6 +485,21 @@
         renderBotStatus();
       }
     }, 30000);
+
+    /* ===================== 群白名单渲染 ===================== */
+    const whitelistBody = document.getElementById('whitelistBody');
+    const whitelistEmptyTip = document.getElementById('whitelistEmptyTip');
+    async function renderWhitelist() {
+      try {
+        const apps = await DB.getApps();
+        const approved = apps.filter(a => a.status === 'approved');
+        whitelistEmptyTip.style.display = approved.length ? 'none' : 'block';
+        whitelistBody.innerHTML = approved.map(a => {
+          const qq = a.email || '—';
+          return `<tr><td>${esc(qq)}</td><td>${esc(a.ign)}</td><td>${esc(a.skill || '—')}</td><td>${esc(a.time)}</td></tr>`;
+        }).join('');
+      } catch (e) { whitelistBody.innerHTML = ''; whitelistEmptyTip.textContent = '加载失败'; whitelistEmptyTip.style.display = 'block'; }
+    }
 
     /* ===================== Tab 1：申请列表 ===================== */
     const adminBody = document.getElementById('adminBody');
@@ -559,6 +570,7 @@
         }
         await DB.updateAppStatus(id, 'approved');
         await renderAdminApps();
+        await renderWhitelist();
       } catch (err) { alert('操作失败：' + err.message); }
     }
     document.getElementById('clearApps').addEventListener('click', async () => {
@@ -826,6 +838,7 @@
       await renderAdminApps(); await loadNoticeEdit(); await loadInfoEdit();
       await renderAdminLinks(); await renderFriendLinks(); await renderAdminMembers(); await renderSuggestions(); await loadPwdEdit();
       await renderStats();
+      await renderWhitelist();
     }
 
     /* ===================== Tab 8：访问统计 ===================== */
