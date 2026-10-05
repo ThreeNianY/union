@@ -179,6 +179,7 @@
       <button data-tab="navlinks">导航与链接</button>
       <button data-tab="members">成员与反馈</button>
       <button data-tab="stats">数据统计</button>
+      <button data-tab="tasks">任务管理</button>
       <button data-tab="bot">系统状态</button>
       <button data-tab="pwd">密码管理</button>
     </div>
@@ -313,7 +314,31 @@
         <p class="empty-tip" id="whitelistEmptyTip">暂无白名单成员</p>
       </div>
 
-      <!-- Tab 9.5：系统状态（数据库连接 + 机器人心跳检测） -->
+      <!-- Tab 7：任务管理 -->
+      <div class="tab-pane" id="tab-tasks">
+        <h3 class="sub-title">积分任务管理</h3>
+        <p class="empty-tip" style="text-align:left;padding:0 0 14px;">添加新任务（标题 / 描述 / 积分 / 类型）</p>
+        <div class="link-add-bar">
+          <input type="text" id="newTaskTitle" placeholder="任务标题" style="flex:1;min-width:120px;" />
+          <input type="text" id="newTaskDesc" placeholder="描述" style="flex:1;min-width:120px;" />
+          <input type="number" id="newTaskPoints" placeholder="积分" style="width:80px;" />
+          <select id="newTaskType">
+            <option value="daily">每日</option>
+            <option value="weekly">每周</option>
+            <option value="once">一次性</option>
+          </select>
+          <button class="btn" id="addTask">添加</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>标题</th><th>描述</th><th>积分</th><th>类型</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="taskBody"></tbody>
+          </table>
+        </div>
+        <p class="empty-tip" id="taskEmptyTip">暂无任务</p>
+      </div>
+
+      <!-- Tab 8：系统状态 -->
       <div class="tab-pane" id="tab-bot">
         <div style="max-width:480px;margin:10px auto;padding:26px;border-radius:12px;background:var(--bg-soft);text-align:center;">
           <div style="margin-bottom:20px;">
@@ -517,6 +542,68 @@
       } catch (e) { whitelistBody.innerHTML = ''; whitelistEmptyTip.textContent = '加载失败'; whitelistEmptyTip.style.display = 'block'; }
     }
     document.getElementById('whitelistSearch').addEventListener('input', renderWhitelist);
+
+    /* ===================== Tab 7：任务管理 ===================== */
+    const taskBody = document.getElementById('taskBody');
+    const taskEmptyTip = document.getElementById('taskEmptyTip');
+    const TASK_TYPES = { daily: '每日', weekly: '每周', once: '一次性' };
+
+    async function renderTasks() {
+      try {
+        const tasks = await DB.getTasks();
+        taskEmptyTip.style.display = tasks.length ? 'none' : 'block';
+        taskEmptyTip.textContent = '暂无任务';
+        taskBody.innerHTML = tasks.map(t => `
+          <tr>
+            <td>${esc(t.title)}</td>
+            <td>${esc(t.description || '—')}</td>
+            <td><span style="color:var(--gold);font-weight:bold;">${t.points}</span></td>
+            <td>${TASK_TYPES[t.task_type] || t.task_type}</td>
+            <td>${t.is_active ? '<span style="color:var(--green);">启用</span>' : '<span style="color:var(--gray);">禁用</span>'}</td>
+            <td>
+              <button class="ok-btn toggle-task" data-id="${t.id}" data-active="${t.is_active}">${t.is_active ? '禁用' : '启用'}</button>
+              <button class="del-btn del-task" data-id="${t.id}">删除</button>
+            </td>
+          </tr>`).join('');
+      } catch (e) { taskBody.innerHTML = ''; taskEmptyTip.textContent = '加载失败'; taskEmptyTip.style.display = 'block'; }
+    }
+
+    document.getElementById('addTask').addEventListener('click', async () => {
+      const title = document.getElementById('newTaskTitle').value.trim();
+      const desc = document.getElementById('newTaskDesc').value.trim();
+      const points = parseInt(document.getElementById('newTaskPoints').value) || 5;
+      const type = document.getElementById('newTaskType').value;
+      if (!title) { showToast('请输入任务标题', 'error'); return; }
+      try {
+        await DB.addTask({ title, description: desc, points, task_type: type });
+        document.getElementById('newTaskTitle').value = '';
+        document.getElementById('newTaskDesc').value = '';
+        document.getElementById('newTaskPoints').value = '';
+        showToast('任务已添加');
+        await renderTasks();
+      } catch (e) { showToast('添加失败: ' + e.message, 'error'); }
+    });
+
+    taskBody.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('toggle-task')) {
+        const id = e.target.dataset.id;
+        const isActive = e.target.dataset.active === 'true';
+        try {
+          await DB.updateTask(id, { is_active: !isActive });
+          showToast(isActive ? '已禁用' : '已启用');
+          await renderTasks();
+        } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
+      }
+      if (e.target.classList.contains('del-task')) {
+        const id = e.target.dataset.id;
+        if (!confirm('确定删除此任务？')) return;
+        try {
+          await DB.deleteTask(id);
+          showToast('已删除');
+          await renderTasks();
+        } catch (e) { showToast('删除失败: ' + e.message, 'error'); }
+      }
+    });
 
     /* ===================== Tab 1：申请列表 ===================== */
     const adminBody = document.getElementById('adminBody');
@@ -868,6 +955,7 @@
       await renderAdminLinks(); await renderFriendLinks(); await renderAdminMembers(); await renderSuggestions(); await loadPwdEdit();
       await renderStats();
       await renderWhitelist();
+      await renderTasks();
     }
 
     /* ===================== Tab 8：访问统计 ===================== */

@@ -382,6 +382,140 @@ const DB = {
       return await res.json();
     }
     return [];
+  },
+
+  /* --- 积分任务管理 --- */
+  async getTasks() {
+    if (USE_CLOUD) {
+      const res = await apiFetch('member_tasks?select=id,title,description,points,task_type,is_active,created_at&order=created_at.desc');
+      return await res.json();
+    }
+    return JSON.parse(localStorage.getItem('fr_tasks') || '[]');
+  },
+  async addTask(data) {
+    if (USE_CLOUD) {
+      await apiFetch('member_tasks', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }); return;
+    }
+    const tasks = JSON.parse(localStorage.getItem('fr_tasks') || '[]');
+    tasks.push({ ...data, id: Date.now() }); localStorage.setItem('fr_tasks', JSON.stringify(tasks));
+  },
+  async updateTask(id, data) {
+    if (USE_CLOUD) {
+      await apiFetch(`member_tasks?id=eq.${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }); return;
+    }
+    const tasks = JSON.parse(localStorage.getItem('fr_tasks') || '[]');
+    const idx = tasks.findIndex(t => t.id === id);
+    if (idx > -1) { tasks[idx] = { ...tasks[idx], ...data }; localStorage.setItem('fr_tasks', JSON.stringify(tasks)); }
+  },
+  async deleteTask(id) {
+    if (USE_CLOUD) {
+      await apiFetch(`member_tasks?id=eq.${id}`, { method: 'DELETE' }); return;
+    }
+    const tasks = JSON.parse(localStorage.getItem('fr_tasks') || '[]');
+    localStorage.setItem('fr_tasks', JSON.stringify(tasks.filter(t => t.id !== id)));
+  },
+
+  /* --- 成员用户系统 --- */
+  async getMemberUser(qq) {
+    if (USE_CLOUD) {
+      const res = await apiFetch(`member_users?qq=eq.${encodeURIComponent(qq)}&select=id,qq,password_hash,ign,avatar_url,created_at`);
+      const arr = await res.json(); return arr[0] || null;
+    }
+    const users = JSON.parse(localStorage.getItem('fr_member_users') || '[]');
+    return users.find(u => u.qq === qq) || null;
+  },
+  async registerMemberUser(data) {
+    if (USE_CLOUD) {
+      const res = await apiFetch('member_users', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return await res.json();
+    }
+    const users = JSON.parse(localStorage.getItem('fr_member_users') || '[]');
+    const user = { ...data, id: Date.now(), created_at: new Date().toISOString() };
+    users.push(user); localStorage.setItem('fr_member_users', JSON.stringify(users));
+    return user;
+  },
+  async updateMemberUser(id, data) {
+    if (USE_CLOUD) {
+      await apiFetch(`member_users?id=eq.${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }); return;
+    }
+    const users = JSON.parse(localStorage.getItem('fr_member_users') || '[]');
+    const idx = users.findIndex(u => u.id === id);
+    if (idx > -1) { users[idx] = { ...users[idx], ...data }; localStorage.setItem('fr_member_users', JSON.stringify(users)); }
+  },
+
+  /* --- 积分记录 --- */
+  async getMemberPoints(userId) {
+    if (USE_CLOUD) {
+      const res = await apiFetch(`member_points?user_id=eq.${userId}&select=id,points,reason,created_at&order=created_at.desc&limit=50`);
+      return await res.json();
+    }
+    const points = JSON.parse(localStorage.getItem('fr_member_points') || '[]');
+    return points.filter(p => p.user_id === userId).slice(0, 50);
+  },
+  async addMemberPoints(data) {
+    if (USE_CLOUD) {
+      await apiFetch('member_points', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }); return;
+    }
+    const points = JSON.parse(localStorage.getItem('fr_member_points') || '[]');
+    points.push({ ...data, id: Date.now(), created_at: new Date().toISOString() });
+    localStorage.setItem('fr_member_points', JSON.stringify(points));
+  },
+
+  /* --- 签到记录 --- */
+  async getMemberCheckins(userId, date) {
+    if (USE_CLOUD) {
+      const res = await apiFetch(`member_checkins?user_id=eq.${userId}&checkin_date=eq.${date}&select=id`);
+      const arr = await res.json(); return arr.length > 0;
+    }
+    const checkins = JSON.parse(localStorage.getItem('fr_member_checkins') || '[]');
+    return checkins.some(c => c.user_id === userId && c.checkin_date === date);
+  },
+  async addMemberCheckin(data) {
+    if (USE_CLOUD) {
+      await apiFetch('member_checkins', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }); return;
+    }
+    const checkins = JSON.parse(localStorage.getItem('fr_member_checkins') || '[]');
+    checkins.push({ ...data, id: Date.now(), created_at: new Date().toISOString() });
+    localStorage.setItem('fr_member_checkins', JSON.stringify(checkins));
+  },
+
+  /* --- 任务完成记录 --- */
+  async getMemberTaskCompletions(userId, taskId) {
+    if (USE_CLOUD) {
+      const res = await apiFetch(`member_task_completions?user_id=eq.${userId}&task_id=eq.${taskId}&select=id,completed_at`);
+      return await res.json();
+    }
+    const completions = JSON.parse(localStorage.getItem('fr_member_task_completions') || '[]');
+    return completions.filter(c => c.user_id === userId && c.task_id === taskId);
+  },
+  async addMemberTaskCompletion(data) {
+    if (USE_CLOUD) {
+      await apiFetch('member_task_completions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }); return;
+    }
+    const completions = JSON.parse(localStorage.getItem('fr_member_task_completions') || '[]');
+    completions.push({ ...data, id: Date.now(), completed_at: new Date().toISOString() });
+    localStorage.setItem('fr_member_task_completions', JSON.stringify(completions));
   }
 };
 
