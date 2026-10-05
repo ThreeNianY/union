@@ -500,7 +500,7 @@ const DB = {
   /* --- 任务完成记录 --- */
   async getMemberTaskCompletions(userId, taskId) {
     if (USE_CLOUD) {
-      const res = await apiFetch(`member_task_completions?user_id=eq.${userId}&task_id=eq.${taskId}&select=id,completed_at,verify_status,proof,proof_text`);
+      const res = await apiFetch(`member_task_completions?user_id=eq.${userId}&task_id=eq.${taskId}`);
       return await res.json();
     }
     const completions = JSON.parse(localStorage.getItem('fr_member_task_completions') || '[]');
