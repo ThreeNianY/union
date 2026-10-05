@@ -806,9 +806,15 @@
             document.getElementById('avatarPreview').innerHTML = `<img src="${base64}" />`;
 
             // 保存到数据库
-            await DB.updateMemberUser(currentUser.id, { avatar_url: base64 });
-            currentUser.avatar_url = base64;
-            document.getElementById('userAvatar').innerHTML = `<img src="${base64}" />`;
+            try {
+              await DB.updateMemberUser(currentUser.id, { avatar_url: base64 });
+              currentUser.avatar_url = base64;
+              document.getElementById('userAvatar').innerHTML = `<img src="${base64}" />`;
+              showToast('头像已更新');
+            } catch (dbErr) {
+              console.error('DB save error:', dbErr);
+              alert('保存到数据库失败：' + (dbErr.message || dbErr));
+            }
           };
           img.src = ev.target.result;
         } catch (e) {
