@@ -84,6 +84,8 @@
     .gate-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
     .gate-tabs button { flex: 1; padding: 10px; border: none; background: var(--bg-soft); border-radius: 8px; font-family: inherit; font-size: 14px; color: var(--gray); cursor: pointer; transition: all .2s; }
     .gate-tabs button.active { background: var(--blue); color: #fff; }
+    .form-input { width: 100%; padding: 11px 14px; border: 1.5px solid #d7e5ee; border-radius: 10px; font-size: 15px; font-family: inherit; margin-bottom: 6px; transition: border-color .2s, box-shadow .2s; }
+    .form-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(12, 123, 179, .12); }
 
     /* 用户面板 */
     .user-panel { background: linear-gradient(135deg, var(--blue), #0e8fc9); border-radius: 16px; padding: 24px; color: #fff; margin-bottom: 24px; display: flex; align-items: center; gap: 20px; }
@@ -235,18 +237,18 @@
         <div id="registerForm" style="display:none;">
           <h2>成员注册</h2>
           <p class="tip">绑定你的 QQ 号，创建成员账号</p>
-          <input type="text" id="regQq" placeholder="QQ 号" maxlength="20" />
-          <input type="text" id="regIgn" placeholder="游戏 ID（可选）" maxlength="50" />
-          <select id="regDept" style="width:100%;padding:11px 14px;border:1.5px solid #d7e5ee;border-radius:10px;font-size:15px;font-family:inherit;margin-bottom:6px;transition:border-color .2s,box-shadow .2s;">
+          <input type="text" id="regQq" class="form-input" placeholder="QQ 号" maxlength="20" />
+          <input type="text" id="regIgn" class="form-input" placeholder="游戏 ID（可选）" maxlength="50" />
+          <select id="regDept" class="form-input">
             <option value="">选择部门（可选）</option>
             <option value="建筑部">建筑部</option>
             <option value="生电部">生电部</option>
             <option value="战斗部">战斗部</option>
             <option value="资源部">资源部</option>
           </select>
-          <input type="password" id="regPwd" placeholder="设置密码（至少6位）" />
-          <input type="password" id="regPwd2" placeholder="确认密码" />
-          <input type="text" id="regCode" placeholder="邀请码（向管理员获取）" maxlength="20" />
+          <input type="password" id="regPwd" class="form-input" placeholder="设置密码（至少6位）" />
+          <input type="password" id="regPwd2" class="form-input" placeholder="确认密码" />
+          <input type="text" id="regCode" class="form-input" placeholder="邀请码（向管理员获取）" maxlength="20" />
           <p class="err" id="regErr"></p>
           <button class="btn btn-gold" id="doRegister">注 册</button>
         </div>
