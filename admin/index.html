@@ -316,7 +316,7 @@
       <!-- Tab 7：任务管理 -->
       <div class="tab-pane" id="tab-tasks">
         <h3 class="sub-title">积分任务管理</h3>
-        <p class="empty-tip" style="text-align:left;padding:0 0 14px;">添加新任务（标题 / 描述 / 积分 / 类型）</p>
+        <p class="empty-tip" style="text-align:left;padding:0 0 14px;">添加新任务（标题 / 描述 / 积分 / 类型 / 验证方式）</p>
         <div class="link-add-bar">
           <input type="text" id="newTaskTitle" placeholder="任务标题" style="flex:1;min-width:120px;" />
           <input type="text" id="newTaskDesc" placeholder="描述" style="flex:1;min-width:120px;" />
@@ -326,15 +326,29 @@
             <option value="weekly">每周</option>
             <option value="once">一次性</option>
           </select>
+          <select id="newTaskVerify">
+            <option value="auto">自动验证</option>
+            <option value="manual">人工审核</option>
+          </select>
           <button class="btn" id="addTask">添加</button>
         </div>
         <div style="overflow-x:auto;">
           <table>
-            <thead><tr><th>标题</th><th>描述</th><th>积分</th><th>类型</th><th>状态</th><th>操作</th></tr></thead>
+            <thead><tr><th>标题</th><th>描述</th><th>积分</th><th>类型</th><th>验证</th><th>状态</th><th>操作</th></tr></thead>
             <tbody id="taskBody"></tbody>
           </table>
         </div>
         <p class="empty-tip" id="taskEmptyTip">暂无任务</p>
+
+        <h3 class="sub-title" style="margin-top:36px;">待审核提交</h3>
+        <p class="empty-tip" style="text-align:left;padding:0 0 14px;">成员提交的凭证，审核通过后发放积分</p>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>成员</th><th>任务</th><th>积分</th><th>说明</th><th>凭证</th><th>提交时间</th><th>操作</th></tr></thead>
+            <tbody id="taskReviewBody"></tbody>
+          </table>
+        </div>
+        <p class="empty-tip" id="taskReviewEmptyTip">暂无待审核</p>
       </div>
 
       <!-- Tab 8：系统状态 -->
@@ -531,6 +545,7 @@
     const taskBody = document.getElementById('taskBody');
     const taskEmptyTip = document.getElementById('taskEmptyTip');
     const TASK_TYPES = { daily: '每日', weekly: '每周', once: '一次性' };
+    const VERIFY_TYPES = { auto: '自动', manual: '人工' };
 
     async function renderTasks() {
       try {
@@ -543,6 +558,7 @@
             <td>${esc(t.description || '—')}</td>
             <td><span style="color:var(--gold);font-weight:bold;">${t.points}</span></td>
             <td>${TASK_TYPES[t.task_type] || t.task_type}</td>
+            <td>${VERIFY_TYPES[t.verify_type] || '自动'}</td>
             <td>${t.is_active ? '<span style="color:var(--green);">启用</span>' : '<span style="color:var(--gray);">禁用</span>'}</td>
             <td>
               <button class="ok-btn toggle-task" data-id="${t.id}" data-active="${t.is_active}">${t.is_active ? '禁用' : '启用'}</button>
@@ -557,9 +573,10 @@
       const desc = document.getElementById('newTaskDesc').value.trim();
       const points = parseInt(document.getElementById('newTaskPoints').value) || 5;
       const type = document.getElementById('newTaskType').value;
+      const verify = document.getElementById('newTaskVerify').value;
       if (!title) { showToast('请输入任务标题', 'error'); return; }
       try {
-        await DB.addTask({ title, description: desc, points, task_type: type });
+        await DB.addTask({ title, description: desc, points, task_type: type, verify_type: verify });
         document.getElementById('newTaskTitle').value = '';
         document.getElementById('newTaskDesc').value = '';
         document.getElementById('newTaskPoints').value = '';
@@ -586,6 +603,70 @@
           showToast('已删除');
           await renderTasks();
         } catch (e) { showToast('删除失败: ' + e.message, 'error'); }
+      }
+    });
+
+    /* --- 任务审核 --- */
+    const taskReviewBody = document.getElementById('taskReviewBody');
+    const taskReviewEmptyTip = document.getElementById('taskReviewEmptyTip');
+
+    async function renderTaskReviews() {
+      try {
+        const res = await apiFetch('member_task_completions?verify_status=eq.pending&select=id,completed_at,proof,proof_text,task:member_tasks(title,points),user:member_users(qq,ign)&order=completed_at.desc');
+        const reviews = await res.json();
+        taskReviewEmptyTip.style.display = reviews.length ? 'none' : 'block';
+        taskReviewBody.innerHTML = reviews.map(r => `
+          <tr>
+            <td>${esc(r.user?.ign || r.user?.qq || '未知')}</td>
+            <td>${esc(r.task?.title || '—')}</td>
+            <td><span style="color:var(--gold);font-weight:bold;">${r.task?.points || 0}</span></td>
+            <td>${esc(r.proof_text || '—')}</td>
+            <td>${r.proof ? `<a href="${r.proof}" target="_blank" style="color:var(--blue);">查看图片</a>` : '—'}</td>
+            <td>${new Date(r.completed_at).toLocaleString('zh-CN')}</td>
+            <td>
+              <button class="ok-btn approve-task" data-id="${r.id}" data-user="${r.user?.id}" data-points="${r.task?.points}" data-task="${r.task?.title}">通过</button>
+              <button class="del-btn reject-task" data-id="${r.id}">拒绝</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        taskReviewBody.innerHTML = '';
+        taskReviewEmptyTip.textContent = '加载失败';
+        taskReviewEmptyTip.style.display = 'block';
+      }
+    }
+
+    taskReviewBody.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('approve-task')) {
+        const id = e.target.dataset.id;
+        const userId = e.target.dataset.user;
+        const points = parseInt(e.target.dataset.points) || 0;
+        const taskTitle = e.target.dataset.task;
+        try {
+          await apiFetch(`member_task_completions?id=eq.${id}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ verify_status: 'approved' })
+          });
+          // 发放积分
+          await apiFetch('member_points', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, points, reason: `完成任务: ${taskTitle}` })
+          });
+          showToast('已通过并发放积分');
+          await renderTaskReviews();
+        } catch (err) { showToast('操作失败: ' + err.message, 'error'); }
+      }
+      if (e.target.classList.contains('reject-task')) {
+        const id = e.target.dataset.id;
+        if (!confirm('确定拒绝此提交？')) return;
+        try {
+          await apiFetch(`member_task_completions?id=eq.${id}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ verify_status: 'rejected' })
+          });
+          showToast('已拒绝');
+          await renderTaskReviews();
+        } catch (err) { showToast('操作失败: ' + err.message, 'error'); }
       }
     });
 
@@ -906,6 +987,7 @@
       await renderStats();
       await renderWhitelist();
       await renderTasks();
+      await renderTaskReviews();
     }
 
     /* ===================== Tab 8：访问统计 ===================== */

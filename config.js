@@ -387,7 +387,7 @@ const DB = {
   /* --- 积分任务管理 --- */
   async getTasks() {
     if (USE_CLOUD) {
-      const res = await apiFetch('member_tasks?select=id,title,description,points,task_type,is_active,created_at&order=created_at.desc');
+      const res = await apiFetch('member_tasks?select=id,title,description,points,task_type,verify_type,is_active,created_at&order=created_at.desc');
       return await res.json();
     }
     return JSON.parse(localStorage.getItem('fr_tasks') || '[]');
@@ -500,7 +500,7 @@ const DB = {
   /* --- 任务完成记录 --- */
   async getMemberTaskCompletions(userId, taskId) {
     if (USE_CLOUD) {
-      const res = await apiFetch(`member_task_completions?user_id=eq.${userId}&task_id=eq.${taskId}&select=id,completed_at`);
+      const res = await apiFetch(`member_task_completions?user_id=eq.${userId}&task_id=eq.${taskId}&select=id,completed_at,verify_status,proof,proof_text`);
       return await res.json();
     }
     const completions = JSON.parse(localStorage.getItem('fr_member_task_completions') || '[]');

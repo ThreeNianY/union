@@ -603,17 +603,33 @@
           const completedToday = completions.some(c => c.completed_at.startsWith(today));
           const isDaily = task.task_type === 'daily';
           const isCompleted = isDaily ? completedToday : completions.length > 0;
+          const isManual = task.verify_type === 'manual';
+
+          // 检查是否有待审核的提交
+          const pending = completions.some(c => c.verify_status === 'pending');
+
+          let btnText, btnClass, disabled;
+          if (isCompleted) {
+            btnText = '已完成 ✓'; btnClass = 'completed'; disabled = true;
+          } else if (pending) {
+            btnText = '待审核'; btnClass = ''; disabled = true;
+          } else if (isManual) {
+            btnText = '提交凭证'; btnClass = ''; disabled = false;
+          } else {
+            btnText = '完成'; btnClass = ''; disabled = false;
+          }
 
           html.push(`
-            <div class="task-item">
-              <div class="task-icon">${task.task_type === 'daily' ? '📅' : task.task_type === 'weekly' ? '📆' : '🎯'}</div>
+            <div class="task-item" data-verify="${task.verify_type || 'auto'}">
+              <div class="task-icon">${isManual ? '📷' : (task.task_type === 'daily' ? '📅' : task.task_type === 'weekly' ? '📆' : '🎯')}</div>
               <div class="task-info">
                 <h4>${esc(task.title)}</h4>
                 <p>${esc(task.description || '')}</p>
+                ${isManual ? '<p style="font-size:12px;color:var(--gray);">需提交凭证，管理员审核后发放积分</p>' : ''}
               </div>
               <div class="task-points">+${task.points}</div>
-              <button class="task-btn ${isCompleted ? 'completed' : ''}" data-id="${task.id}" ${isCompleted ? 'disabled' : ''}>
-                ${isCompleted ? '已完成' : '完成'}
+              <button class="task-btn ${btnClass}" data-id="${task.id}" data-verify="${task.verify_type || 'auto'}" ${disabled ? 'disabled' : ''}>
+                ${btnText}
               </button>
             </div>
           `);
@@ -628,6 +644,15 @@
       if (!e.target.classList.contains('task-btn') || e.target.disabled) return;
 
       const taskId = e.target.dataset.id;
+      const verifyType = e.target.dataset.verify || 'auto';
+
+      if (verifyType === 'manual') {
+        // 人工审核任务：弹出凭证提交窗口
+        openProofModal(taskId);
+        return;
+      }
+
+      // 自动验证任务：直接提交
       e.target.disabled = true;
       e.target.textContent = '提交中...';
 
@@ -638,7 +663,8 @@
 
         await DB.addMemberTaskCompletion({
           user_id: currentUser.id,
-          task_id: taskId
+          task_id: taskId,
+          verify_status: 'approved'
         });
         await DB.addMemberPoints({
           user_id: currentUser.id,
@@ -655,6 +681,80 @@
         alert('操作失败：' + e.message);
       }
     });
+
+    /* ===================== 凭证提交弹窗 ===================== */
+    function openProofModal(taskId) {
+      const tasks = window._cachedTasks || [];
+      const task = tasks.find(t => t.id == taskId);
+      if (!task) return;
+
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;';
+      modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:30px;max-width:420px;width:90%;">
+          <h3 style="margin-bottom:6px;">提交任务凭证</h3>
+          <p style="font-size:14px;color:var(--gray);margin-bottom:16px;">${esc(task.title)}</p>
+          <div class="form-group">
+            <label>文字说明</label>
+            <textarea id="proofText" rows="3" placeholder="请描述任务完成情况..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>截图凭证（可选）</label>
+            <input type="file" id="proofFile" accept="image/*" style="padding:8px 0;" />
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px;">
+            <button class="btn" id="submitProof" style="flex:1;">提交审核</button>
+            <button class="btn-outline" id="cancelProof" style="flex:1;">取消</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelector('#cancelProof').onclick = () => modal.remove();
+      modal.querySelector('#submitProof').onclick = async () => {
+        const text = modal.querySelector('#proofText').value.trim();
+        const file = modal.querySelector('#proofFile').files[0];
+        if (!text && !file) { alert('请填写说明或上传截图'); return; }
+
+        const btn = modal.querySelector('#submitProof');
+        btn.disabled = true;
+        btn.textContent = '提交中...';
+
+        try {
+          let proofUrl = null;
+          if (file) {
+            // 上传凭证图片
+            const ext = file.name.split('.').pop().toLowerCase();
+            const fileName = `proof_${currentUser.id}_${Date.now()}.${ext}`;
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch(`${SUPA_URL}/storage/v1/object/public/avatars/${fileName}`, {
+              method: 'POST',
+              headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` },
+              body: formData
+            });
+            if (!res.ok) throw new Error('凭证上传失败');
+            proofUrl = `${SUPA_URL}/storage/v1/object/public/avatars/${fileName}`;
+          }
+
+          await DB.addMemberTaskCompletion({
+            user_id: currentUser.id,
+            task_id: taskId,
+            verify_status: 'pending',
+            proof: proofUrl || null,
+            proof_text: text || null
+          });
+
+          modal.remove();
+          showToast('已提交，等待管理员审核');
+          await loadTasks();
+        } catch (e) {
+          btn.disabled = false;
+          btn.textContent = '提交审核';
+          alert('提交失败：' + e.message);
+        }
+      };
+    }
 
     /* ===================== 编辑资料 ===================== */
     document.getElementById('editProfileBtn').addEventListener('click', () => {
