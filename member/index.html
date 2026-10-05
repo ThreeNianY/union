@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -395,7 +395,7 @@
   </main>
 
   <!-- 公共配置与数据层 -->
-  <script src="../config.js?v=8"></script>
+  <script src="../config.js?v=9"></script>
   <script>
     /* ===================== 全局状态 ===================== */
     let currentUser = null;
@@ -907,7 +907,20 @@
 
     async function loadRoster() {
       try {
-        const members = await DB.getMembers();
+        // 同时获取成员名录和登录用户信息
+        const [members, users] = await Promise.all([
+          DB.getMembers(),
+          DB.getMemberUsers()
+        ]);
+        
+        // 创建用户映射表（以ign为键）
+        const userMap = {};
+        users.forEach(u => {
+          if (u.ign) {
+            userMap[u.ign] = u;
+          }
+        });
+        
         const grid = document.getElementById('rosterGrid');
         const DEPTS = ['战斗部门', '建筑部门', '资源部门', '生电部门'];
         const grouped = {};
@@ -915,6 +928,12 @@
         grouped['管理层'] = [];
 
         members.forEach(m => {
+          // 尝试从用户表获取头像
+          const userInfo = userMap[m.ign];
+          if (userInfo && userInfo.avatar_url) {
+            m.avatar_url = userInfo.avatar_url;
+          }
+          
           if (m.role && m.role !== '无') {
             grouped['管理层'].push(m);
           } else if (grouped[m.dept]) {

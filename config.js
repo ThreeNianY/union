@@ -430,6 +430,13 @@ const DB = {
     const users = JSON.parse(localStorage.getItem('fr_member_users') || '[]');
     return users.find(u => u.qq === qq) || null;
   },
+  async getMemberUsers() {
+    if (USE_CLOUD) {
+      const res = await apiFetch('member_users?select=id,qq,ign,avatar_url');
+      return await res.json();
+    }
+    return JSON.parse(localStorage.getItem('fr_member_users') || '[]');
+  },
   async registerMemberUser(data) {
     if (USE_CLOUD) {
       const res = await apiFetch('member_users', {
