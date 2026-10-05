@@ -181,7 +181,6 @@
       <button data-tab="stats">数据统计</button>
       <button data-tab="tasks">任务管理</button>
       <button data-tab="bot">系统状态</button>
-      <button data-tab="pwd">密码管理</button>
     </div>
     <div class="side-foot">
       <button class="btn-ghost" id="adminLogout">退出登录</button>
@@ -358,21 +357,6 @@
         </div>
       </div>
 
-      <!-- Tab 9：密码管理 -->
-      <div class="tab-pane" id="tab-pwd">
-        <p class="empty-tip" style="text-align:left;padding:0 0 14px;">修改两个访问密码（都保存在云端）</p>
-        <div style="max-width:400px;margin:0 auto;">
-          <div class="form-group"><label>当前成员密码</label><input type="text" id="curMemberPwd" readonly style="background:#f5f5f5;" /></div>
-          <div class="form-group"><label>新成员密码</label><input type="text" id="newMemberPwd" placeholder="输入新的成员专区密码" /></div>
-          <div style="text-align:right;"><button class="btn" id="saveMemberPwd">保存成员密码</button></div>
-          <p class="empty-tip" id="pwdSaveStatus" style="text-align:left;"></p>
-          <hr style="margin:24px 0;border:none;border-top:1px solid #edf2f6;" />
-          <div class="form-group"><label>当前管理员密码</label><input type="text" id="curAdminPwd" readonly style="background:#f5f5f5;" /></div>
-          <div class="form-group"><label>新管理员密码</label><input type="text" id="newAdminPwd" placeholder="输入新的管理员密码" /></div>
-          <div style="text-align:right;"><button class="btn" id="saveAdminPwd">保存管理员密码</button></div>
-          <p class="empty-tip" id="adminPwdSaveStatus" style="text-align:left;"></p>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -758,40 +742,6 @@
       await DB.updateFriendLink(e.target.dataset.id, e.target.dataset.field, e.target.value.trim());
     });
 
-    /* ===================== Tab 4：密码管理 ===================== */
-    async function loadPwdEdit() {
-      try {
-        const s = await DB.getSettings();
-        document.getElementById('curMemberPwd').value = s.member_pwd || '（未设置）';
-        document.getElementById('curAdminPwd').value = s.admin_pwd || '（未设置）';
-        document.getElementById('pwdSaveStatus').textContent = '';
-        document.getElementById('adminPwdSaveStatus').textContent = '';
-      } catch (e) {
-        document.getElementById('pwdSaveStatus').textContent = '读取失败';
-        document.getElementById('adminPwdSaveStatus').textContent = '读取失败';
-      }
-    }
-    document.getElementById('saveMemberPwd').addEventListener('click', async () => {
-      const newPwd = document.getElementById('newMemberPwd').value.trim();
-      if (!newPwd) { alert('请输入新密码'); return; }
-      try {
-        await DB.saveSetting('member_pwd', newPwd);
-        document.getElementById('pwdSaveStatus').textContent = '成员密码已更新！';
-        document.getElementById('newMemberPwd').value = '';
-        await loadPwdEdit();
-      } catch (e) { alert('保存失败：' + e.message); }
-    });
-    document.getElementById('saveAdminPwd').addEventListener('click', async () => {
-      const newPwd = document.getElementById('newAdminPwd').value.trim();
-      if (!newPwd) { alert('请输入新密码'); return; }
-      try {
-        await DB.saveSetting('admin_pwd', newPwd);
-        document.getElementById('adminPwdSaveStatus').textContent = '管理员密码已更新！';
-        document.getElementById('newAdminPwd').value = '';
-        await loadPwdEdit();
-      } catch (e) { alert('保存失败：' + e.message); }
-    });
-
     /* ===================== Tab 5：成员名录管理 ===================== */
     const memberBody = document.getElementById('memberBody');
     const memberEmptyTip = document.getElementById('memberEmptyTip');
@@ -952,7 +902,7 @@
     /* ===================== 登录后刷新所有数据 ===================== */
     async function refreshAll() {
       await renderAdminApps(); await loadNoticeEdit(); await loadInfoEdit();
-      await renderAdminLinks(); await renderFriendLinks(); await renderAdminMembers(); await renderSuggestions(); await loadPwdEdit();
+      await renderAdminLinks(); await renderFriendLinks(); await renderAdminMembers(); await renderSuggestions();
       await renderStats();
       await renderWhitelist();
       await renderTasks();

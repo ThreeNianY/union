@@ -239,6 +239,7 @@
           <input type="text" id="regIgn" placeholder="游戏 ID（可选）" maxlength="50" />
           <input type="password" id="regPwd" placeholder="设置密码（至少6位）" />
           <input type="password" id="regPwd2" placeholder="确认密码" />
+          <input type="text" id="regCode" placeholder="邀请码（向管理员获取）" maxlength="20" />
           <p class="err" id="regErr"></p>
           <button class="btn btn-gold" id="doRegister">注 册</button>
         </div>
@@ -443,17 +444,21 @@
     });
 
     /* ===================== 注册 ===================== */
+    const INVITE_CODE = 'cxjl2026';   // 固定邀请码，修改这里即可更换
+
     document.getElementById('doRegister').addEventListener('click', async () => {
       const qq = document.getElementById('regQq').value.trim();
       const ign = document.getElementById('regIgn').value.trim();
       const pwd = document.getElementById('regPwd').value;
       const pwd2 = document.getElementById('regPwd2').value;
+      const code = document.getElementById('regCode').value.trim();
       const err = document.getElementById('regErr');
       err.textContent = '';
 
       if (!qq || qq.length < 5) { err.textContent = '请输入正确的 QQ 号'; return; }
       if (!pwd || pwd.length < 6) { err.textContent = '密码至少 6 位'; return; }
       if (pwd !== pwd2) { err.textContent = '两次密码输入不一致'; return; }
+      if (code !== INVITE_CODE) { err.textContent = '邀请码错误，请向管理员获取正确的邀请码'; return; }
 
       try {
         // 检查 QQ 是否已注册
@@ -668,6 +673,12 @@
       const file = e.target.files[0];
       if (!file) return;
 
+      // 限制文件大小（500KB）
+      if (file.size > 500 * 1024) {
+        alert('图片太大，请选择 500KB 以内的图片');
+        return;
+      }
+
       // 预览
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -677,18 +688,27 @@
 
       // 上传到 Supabase Storage
       try {
-        const fileName = `avatar_${currentUser.id}_${Date.now()}.${file.name.split('.').pop()}`;
+        const ext = file.name.split('.').pop().toLowerCase();
+        const fileName = `avatar_${currentUser.id}_${Date.now()}.${ext}`;
+
+        // 使用 FormData 上传
+        const formData = new FormData();
+        formData.append('file', file);
+
         const res = await fetch(`${SUPA_URL}/storage/v1/object/public/avatars/${fileName}`, {
           method: 'POST',
           headers: {
             'apikey': SUPA_KEY,
-            'Content-Type': file.type
+            'Authorization': `Bearer ${SUPA_KEY}`
           },
-          body: file
+          body: formData
         });
 
-        if (!res.ok) throw new Error('上传失败');
-        const data = await res.json();
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`上传失败 (${res.status}): ${errText}`);
+        }
+
         const avatarUrl = `${SUPA_URL}/storage/v1/object/public/avatars/${fileName}`;
 
         // 保存到数据库
@@ -696,7 +716,8 @@
         currentUser.avatar_url = avatarUrl;
         document.getElementById('userAvatar').innerHTML = `<img src="${avatarUrl}" />`;
       } catch (e) {
-        alert('头像上传失败：' + e.message);
+        console.error('Avatar upload error:', e);
+        alert('头像上传失败：' + e.message + '\n\n请检查 Supabase Storage 的 avatars 桶是否已创建且设置为 Public');
       }
     });
 
