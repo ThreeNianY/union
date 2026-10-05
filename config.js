@@ -393,9 +393,33 @@ function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').
  * apiFetch 请求封装 / Toast 提示 / 加载动画 / 失败重试 / 按钮loading
  * ============================================================ */
 
-/* ---------- 云端请求封装：12秒超时 + HTTP 状态检查 ---------- */
+/* ---------- 云端请求封装：12秒超时 + HTTP 状态检查 + 自动重试 ---------- */
 const REQ_TIMEOUT = 12000;
+const MAX_RETRIES = 3;
+
 async function apiFetch(path, options) {
+  let lastError;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await apiFetchOnce(path, options);
+    } catch (e) {
+      lastError = e;
+      // 网络错误才重试，服务器 4xx/5xx 错误直接抛出
+      if (!e.message.includes('网络') && !e.message.includes('超时')) throw e;
+      if (attempt < MAX_RETRIES) {
+        // 指数退避：1s, 2s, 4s
+        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+      }
+    }
+  }
+  // 所有重试都失败，给出更具体的提示
+  const tip = lastError.message.includes('超时')
+    ? '网络连接超时，请检查网络后重试\n（建议切换网络或稍后再试）'
+    : '网络连接失败，请检查网络后重试\n（建议切换 WiFi/流量或稍后再试）';
+  throw new Error(tip);
+}
+
+async function apiFetchOnce(path, options) {
   const ctrl = new AbortController();
   const timer = setTimeout(function () { ctrl.abort(); }, REQ_TIMEOUT);
   let res;
