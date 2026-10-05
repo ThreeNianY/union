@@ -237,6 +237,13 @@
           <p class="tip">绑定你的 QQ 号，创建成员账号</p>
           <input type="text" id="regQq" placeholder="QQ 号" maxlength="20" />
           <input type="text" id="regIgn" placeholder="游戏 ID（可选）" maxlength="50" />
+          <select id="regDept" style="width:100%;padding:11px 14px;border:1.5px solid #d7e5ee;border-radius:10px;font-size:15px;font-family:inherit;margin-bottom:6px;transition:border-color .2s,box-shadow .2s;">
+            <option value="">选择部门（可选）</option>
+            <option value="建筑部">建筑部</option>
+            <option value="生电部">生电部</option>
+            <option value="战斗部">战斗部</option>
+            <option value="资源部">资源部</option>
+          </select>
           <input type="password" id="regPwd" placeholder="设置密码（至少6位）" />
           <input type="password" id="regPwd2" placeholder="确认密码" />
           <input type="text" id="regCode" placeholder="邀请码（向管理员获取）" maxlength="20" />
@@ -449,6 +456,7 @@
     document.getElementById('doRegister').addEventListener('click', async () => {
       const qq = document.getElementById('regQq').value.trim();
       const ign = document.getElementById('regIgn').value.trim();
+      const dept = document.getElementById('regDept').value;
       const pwd = document.getElementById('regPwd').value;
       const pwd2 = document.getElementById('regPwd2').value;
       const code = document.getElementById('regCode').value.trim();
@@ -467,7 +475,7 @@
 
         const hash = await hashPwd(pwd);
         const user = await DB.registerMemberUser({
-          qq, password_hash: hash, ign: ign || null, avatar_url: null
+          qq, password_hash: hash, ign: ign || null, dept: dept || null, avatar_url: null
         });
 
         currentUser = user;
@@ -819,6 +827,8 @@
               currentUser.avatar_url = base64;
               document.getElementById('userAvatar').innerHTML = `<img src="${base64}" />`;
               showToast('头像已更新');
+              // 刷新成员名录
+              await renderRoster();
             } catch (dbErr) {
               console.error('DB save error:', dbErr);
               alert('保存到数据库失败：' + (dbErr.message || dbErr));

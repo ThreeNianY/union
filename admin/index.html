@@ -771,39 +771,21 @@
     }
 
     /* 第4题选项 → 成员名录部门名（与成员页 DEPTS 全称一致） */
-    function skillToDept(skill) {
-      const s = skill || '';
-      if (s.includes('资源')) return '资源部门';
-      if (s.includes('建筑')) return '建筑部门';
-      if (s.includes('生电')) return '生电部门';
-      if (s.includes('PVP') || s.includes('战斗')) return '战斗部门';
-      return '';
-    }
-
     /* 从申请"其他回答"中解析服务器（【服务器】网易服） */
     function parseAppServer(msg) {
       const m = (msg || '').match(/【服务器】\s*([^\r\n]+)/);
       return m ? m[1].trim() : '';
     }
 
-    /* 同意申请：自动按所选部门 + QQ昵称加入成员名录，并更新申请状态（不发邮件） */
+    /* 同意申请：仅更新申请状态（机器人会自动审批加群，不再自动加部门） */
     async function approveApp(id, qq, ign, skill, appMsg) {
-      const dept = skillToDept(skill);
       const srv = parseAppServer(appMsg);
-      if (!confirm(`确定同意「${ign}」的入会申请吗？\n申请者 QQ：${qq || '未填写'}\n版本：${srv || '未填写'}\n自动加入部门：${dept || '未识别（进名录后手动分配）'}\n确认后请手动加 QQ 通知对方。`)) return;
+      if (!confirm(`确定同意「${ign}」的入会申请吗？\n申请者 QQ：${qq || '未填写'}\n版本：${srv || '未填写'}\n确认后该申请将进入白名单，机器人会自动审批其加群申请。`)) return;
       try {
-        /* 去重：名录中已有同名成员则不重复添加 */
-        const members = await DB.getMembers();
-        const existed = members.some(m => m.ign === ign);
-        if (existed) {
-          alert(`成员名录中已存在「${ign}」，不再重复添加。`);
-        } else {
-          await DB.addMember({ ign, dept, dept2: '', server: srv, role: '' });
-          alert(`已加入成员名录：${ign}（${dept || '待分配部门'}${srv ? '，' + srv : ''}），请尽快加 QQ「${qq}」通知对方。`);
-        }
         await DB.updateAppStatus(id, 'approved');
         await renderAdminApps();
         await renderWhitelist();
+        alert(`已同意「${ign}」的入会申请。\n该申请已进入白名单，机器人会自动审批其加群申请。`);
       } catch (err) { alert('操作失败：' + err.message); }
     }
     document.getElementById('clearApps').addEventListener('click', async () => {
